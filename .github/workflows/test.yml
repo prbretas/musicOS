@@ -1,159 +1,76 @@
-name: Tests & CI
+name: Testes e CI
 
+# Spec: .kiro/specs/qualidade-e-testes (Requisito 4)
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
-    branches: [main, develop]
+    branches: [main]
 
 env:
   NODE_VERSION: '20'
+  # Chaves do projeto Supabase de testes, cadastradas em Settings > Secrets and variables > Actions.
+  # Sem os secrets, o build usa valores de exemplo (o app nao acessa o Supabase no build).
+  NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://exemplo.supabase.co' }}
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'chave-de-exemplo' }}
+  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+  NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+defaults:
+  run:
+    working-directory: src/app-MusicOS
 
 jobs:
-  # ============================================
-  # TESTES UNITÁRIOS
-  # ============================================
-  unit-tests:
-    name: Unit Tests
+  unit:
+    name: Testes unitários
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: npm
           cache-dependency-path: src/app-MusicOS/package-lock.json
+      - run: npm ci
+      - run: npx vitest run
 
-      - name: Install dependencies
-        working-directory: src/app-MusicOS
-        run: npm ci
-
-      - name: Run Unit Tests
-        working-directory: src/app-MusicOS
-        run: npm run test:coverage
-
-      - name: Upload coverage
-        uses: codecov/codecov-action@v3
-        with:
-          directory: src/app-MusicOS/coverage
-          flags: unit
-          name: Unit Tests Coverage
-
-  # ============================================
-  # LINT
-  # ============================================
   lint:
-    name: Lint
+    name: Lint e tipos
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: npm
           cache-dependency-path: src/app-MusicOS/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npx tsc --noEmit -p tsconfig.json
 
-      - name: Install dependencies
-        working-directory: src/app-MusicOS
-        run: npm ci
-
-      - name: Run Lint
-        working-directory: src/app-MusicOS
-        run: npm run lint
-
-  # ============================================
-  # BUILD
-  # ============================================
-  build:
-    name: Build
+  e2e:
+    name: Build e testes E2E
     runs-on: ubuntu-latest
-    needs: [unit-tests, lint]
+    needs: [unit, lint]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: npm
           cache-dependency-path: src/app-MusicOS/package-lock.json
-
-      - name: Install dependencies
-        working-directory: src/app-MusicOS
-        run: npm ci
-
-      - name: Build Application
-        working-directory: src/app-MusicOS
-        run: npm run build
-
-  # ============================================
-  # TESTES E2E
-  # ============================================
-  e2e-tests:
-    name: E2E Tests
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: src/app-MusicOS/package-lock.json
-
-      - name: Install dependencies
-        working-directory: src/app-MusicOS
-        run: npm ci
-
-      - name: Install Playwright browsers
-        working-directory: src/app-MusicOS
-        run: npx playwright install --with-deps
-
-      - name: Start development server
-        working-directory: src/app-MusicOS
-        run: npm run dev &
-        shell: bash
-
-      - name: Wait for server
-        run: sleep 10 && curl -f http://localhost:3000
-
-      - name: Run E2E Tests
-        working-directory: src/app-MusicOS
-        run: npm run test:e2e
-
-      - name: Upload E2E artifacts
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
+      - name: Relatório do Playwright
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: src/app-MusicOS/test-results
+          path: |
+            src/app-MusicOS/playwright-report
+            src/app-MusicOS/test-results
+          retention-days: 7
 
-  # ============================================
-  # DEPLOY (apenas em main)
-  # ============================================
-  deploy:
-    name: Deploy to Vercel
-    runs-on: ubuntu-latest
-    needs: [build, e2e-tests]
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
+  # Deploy desligado ate existir a spec de publicacao (Vercel).
