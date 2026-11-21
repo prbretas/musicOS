@@ -13,7 +13,7 @@
 import { useState, useEffect } from 'react';
 import { useInstrument, useCurrentInstrument } from '@/hooks/useInstrument';
 import { InfoButton } from './ui/InfoButton';
-import type { InstrumentProfile, NoteName } from '@/types/music';
+import type { InstrumentId, InstrumentProfile, NoteName } from '@/types/music';
 
 interface InstrumentSelectorProps {
   /** ID do instrumento inicial */
@@ -47,7 +47,7 @@ export function InstrumentSelector({
     setTuning,
     instrumentUtils,
   } = useInstrument({
-    initialInstrumentId,
+    initialInstrumentId: initialInstrumentId as InstrumentId | undefined,
     onInstrumentChange,
     onTuningChange,
   });

@@ -1,10 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
-import Stripe from 'stripe';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16',
-});
+import type Stripe from 'stripe';
+import { getStripe } from '@/lib/stripe/server';
 
 const PRICE_IDS = {
   pro_monthly: process.env.STRIPE_PRO_MONTHLY_PRICE_ID || 'price_pro_monthly',
@@ -53,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     if (!customerId) {
       // Create Stripe customer
-      const customer = await stripe.customers.create({
+      const customer = await getStripe().customers.create({
         email: user.email!,
         name: user.user_metadata?.name || user.email!,
         metadata: {
@@ -89,7 +86,7 @@ export async function POST(request: NextRequest) {
       allow_promotion_codes: true,
     };
 
-    const session = await stripe.checkout.sessions.create(checkoutParams);
+    const session = await getStripe().checkout.sessions.create(checkoutParams);
 
     return NextResponse.json({ sessionId: session.id, url: session.url });
   } catch (error) {

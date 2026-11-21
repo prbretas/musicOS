@@ -13,6 +13,9 @@
 // REGISTRY & TYPES
 // ============================================
 
+import { instrumentRegistry } from './registry';
+import type { InstrumentProfile } from '@/types/music';
+
 export { instrumentRegistry, DEFAULT_INSTRUMENTS, TUNING_PRESETS } from './registry';
 export type { InstrumentProfile, InstrumentId } from '@/types/music';
 

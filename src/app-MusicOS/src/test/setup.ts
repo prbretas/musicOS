@@ -8,6 +8,8 @@
  */
 
 import { beforeEach, afterEach, vi } from 'vitest';
+// Comparadores do Testing Library (toBeInTheDocument, toHaveTextContent...)
+import '@testing-library/jest-dom/vitest';
 
 // ============================================
 // MOCK DE VARIÁVEIS DE AMBIENTE

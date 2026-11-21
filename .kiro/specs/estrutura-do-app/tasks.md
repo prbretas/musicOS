@@ -4,7 +4,7 @@ Status: **aprovado pelo usuário** ("pode fazer e depois eu avalio"). Executar u
 
 ## Parte A — Layout de abas e conteúdo
 
-- [ ] **A0. Commit de segurança** do estado atual (código das últimas sessões ainda não está no git). *Precisa de autorização do usuário.*
+- [x] **A0. Commit de segurança** do estado atual — PR #1 mesclado na `main`.
 - [ ] **A1. Store de seleção** `lib/state/selection.ts` (tônica, escala, instrumento, persistido) com testes. — R6.3
 - [ ] **A2. Layout da área logada** `src/app/app/layout.tsx` com `AppHeader`, `AppTabs`, `ScaleSelectionBar`, `AppFooter` no visual de referência; páginas das 5 abas vazias; `/app` redireciona para `/app/escalas`. — R6.1, R6.2, R6.3, R6.5
 - [ ] **A3. Aba Escalas**: `ScaleHeroCard`, círculo de escalas, `IntervalTable`, `ScaleNotesPanel`, `PianoKeyboard` lendo o store e com os tokens do design. — R6.4

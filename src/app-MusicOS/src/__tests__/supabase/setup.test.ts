@@ -4,8 +4,24 @@
  * Tests for the Supabase configuration and setup (Issue INF-005)
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { createClient } from '../../lib/supabase/client';
+
+// Sem rede: o cliente real é substituído por um fake com a mesma forma da API.
+vi.mock('@supabase/ssr', () => ({
+  createBrowserClient: vi.fn(() => ({
+    auth: {
+      signInWithPassword: vi.fn(),
+      signUp: vi.fn(),
+      signOut: vi.fn(),
+      getSession: vi.fn(async () => ({ data: { session: null }, error: null })),
+      getUser: vi.fn(),
+    },
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({ limit: vi.fn(async () => ({ data: [], error: null })) })),
+    })),
+  })),
+}));
 
 describe('INF-005: Supabase Setup', () => {
   describe('Environment Configuration', () => {
@@ -25,7 +41,7 @@ describe('INF-005: Supabase Setup', () => {
       
       expect(anonKey).not.toBe('demo-anon-key');
       expect(anonKey).not.toBe('');
-      expect(anonKey.length).toBeGreaterThan(20); // API keys are usually long
+      expect(anonKey?.length ?? 0).toBeGreaterThan(20); // API keys are usually long
     });
 
     it('should have valid Supabase URL format', () => {
@@ -48,7 +64,7 @@ describe('INF-005: Supabase Setup', () => {
 
     it('should have auth methods available', () => {
       const client = createClient();
-      expect(client.auth.signIn).toBeDefined();
+      expect(client.auth.signInWithPassword).toBeDefined();
       expect(client.auth.signUp).toBeDefined();
       expect(client.auth.signOut).toBeDefined();
       expect(client.auth.getSession).toBeDefined();

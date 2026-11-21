@@ -77,7 +77,7 @@ export function ScaleDisplay({
       'locrian': 'Locrian'
     };
     
-    return `${root} ${scaleNames[type] || type}`;
+    return `${root.replace('#', '♯')} ${scaleNames[type] || type}`;
   };
 
   return (
@@ -214,7 +214,7 @@ export function ScaleDisplay({
           <div className="text-center">
             <div className="text-sm text-slate-500 dark:text-slate-400">Type</div>
             <div className="text-lg font-semibold text-slate-800 dark:text-white">
-              {scaleType.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+              {selectedScaleType.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
             </div>
           </div>
           <div className="text-center">
@@ -226,7 +226,7 @@ export function ScaleDisplay({
           <div className="text-center">
             <div className="text-sm text-slate-500 dark:text-slate-400">Mode</div>
             <div className="text-lg font-semibold text-slate-800 dark:text-white">
-              {scaleType.includes('pentatonic') ? 'Pentatonic' : 'Diatonic'}
+              {selectedScaleType.includes('pentatonic') ? 'Pentatonic' : 'Diatonic'}
             </div>
           </div>
         </div>

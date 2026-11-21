@@ -146,30 +146,28 @@ Linha 3`;
 
   describe('Posição do Popup', () => {
     it('posiciona corretamente em top-right (padrão)', () => {
-      const { container } = render(
-        <InfoButton content="Teste" position="top-right" />
-      );
+      render(<InfoButton content="Teste" position="top-right" />);
+      fireEvent.click(screen.getByRole('button', { name: /mais informações/i }));
       
-      const popup = container.querySelector('.absolute');
-      expect(popup).toHaveClass('right-0');
+      const popup = screen.getByRole('dialog');
+      expect(popup).toHaveClass('absolute', 'right-0');
     });
 
     it('posiciona corretamente em top-left', () => {
-      const { container } = render(
-        <InfoButton content="Teste" position="top-left" />
-      );
+      render(<InfoButton content="Teste" position="top-left" />);
+      fireEvent.click(screen.getByRole('button', { name: /mais informações/i }));
       
-      const popup = container.querySelector('.absolute');
-      expect(popup).toHaveClass('left-0');
+      const popup = screen.getByRole('dialog');
+      expect(popup).toHaveClass('absolute', 'left-0');
     });
 
     it('posiciona corretamente em inline', () => {
-      const { container } = render(
-        <InfoButton content="Teste" position="inline" />
-      );
+      render(<InfoButton content="Teste" position="inline" />);
+      fireEvent.click(screen.getByRole('button', { name: /mais informações/i }));
       
-      const popup = container.querySelector('.absolute');
+      const popup = screen.getByRole('dialog');
       expect(popup).toHaveClass('static', 'ml-2');
+      expect(popup).not.toHaveClass('absolute');
     });
   });
 

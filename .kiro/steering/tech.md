@@ -37,9 +37,15 @@ O app fica em `src/app-MusicOS`. Variáveis de ambiente em `src/app-MusicOS/.env
 
 O Playwright não tem navegador baixado nesta máquina; usar `chromium.launch({ channel: 'chrome' })`. O Edge fecha ao abrir por política da máquina.
 
+## Testes
+
+- Unitários: `src/__tests__/` (Vitest). E2E: `src/app-MusicOS/e2e/` (Playwright), com o fixture de `e2e/support/fixtures.ts`, que reprova o teste se houver erro no console.
+- CI: `.github/workflows/test.yml` roda unitários, lint, tipos, build e E2E em todo PR para a `main`.
+- Não rodar `next build` com o `npm run dev` no ar: os dois usam a pasta `.next`, e o servidor de desenvolvimento para de responder.
+
 ## Problemas conhecidos
 
-- 119 de 221 testes falham (testes antigos de componentes e configuração: `React is not defined`, `jest is not defined`). Tratados na spec `qualidade-e-testes` quando ela existir.
-- Código duplicado sem uso: dois AudioEngines (`lib/audio/AudioEngine.ts`, `lib/audio/core/`), dois registros de instrumentos (`lib/instruments`, `lib/music/instruments`), motor `lib/music-theory/` usado só por testes. Não usar em código novo.
+- `lib/music/theory.ts` (usado só pelo `ScaleDisplay` antigo) monta errado o campo harmônico das escalas menores. O campo correto é o de `lib/music/escalas.ts`. O `ScaleDisplay` sai na limpeza C1.
+- `lib/music/instruments/` só é usado pelo `InstrumentSelector` e pela demo antiga; sai na limpeza C1. Não usar em código novo.
 - Nenhuma rota é protegida por login (não há `middleware.ts`).
 - O cadastro não cria o registro em `profiles`.

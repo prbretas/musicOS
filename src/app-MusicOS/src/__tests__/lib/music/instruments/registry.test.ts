@@ -2,19 +2,14 @@
  * Tests for InstrumentRegistry (CORE-002)
  */
 
-import { instrumentRegistry, DEFAULT_INSTRUMENTS } from '@/lib/music/instruments/registry';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { instrumentRegistry, instrumentUtils, DEFAULT_INSTRUMENTS } from '@/lib/music/instruments/registry';
 import type { InstrumentProfile, NoteName } from '@/types/music';
 
 describe('InstrumentRegistry', () => {
-  // Limpar o singleton antes de cada teste
+  // O registro é singleton: remove o instrumento de teste para isolar os casos
   beforeEach(() => {
-    // Resetar a instância singleton (hack para testes)
-    const registry = instrumentRegistry as any;
-    Object.keys(registry).forEach(key => {
-      if (key !== 'getInstance' && typeof registry[key] === 'function') {
-        delete registry[key];
-      }
-    });
+    instrumentRegistry.removeInstrument('custom-test');
   });
 
   describe('Singleton Pattern', () => {
@@ -263,21 +258,21 @@ describe('InstrumentRegistry', () => {
     });
 
     it('should calculate interval between positions', () => {
-      // Corda 6 aberta (E) para corda 6, traste 5 (A) = 7 semitons (quinta justa)
+      // Corda 6 aberta (E) para corda 6, traste 5 (A) = 5 semitons (quarta justa)
       const interval1 = instrumentRegistry.getIntervalBetweenPositions(
         'guitarra-6',
         { string: 0, fret: 0 },
         { string: 0, fret: 5 }
       );
-      expect(interval1).toBe(7);
+      expect(interval1).toBe(5);
       
-      // Corda 6 aberta (E) para corda 5 aberta (A) = 7 semitons (quinta justa)
+      // Corda 6 aberta (E) para corda 5 aberta (A) = 5 semitons (quarta justa)
       const interval2 = instrumentRegistry.getIntervalBetweenPositions(
         'guitarra-6',
         { string: 0, fret: 0 },
         { string: 1, fret: 0 }
       );
-      expect(interval2).toBe(7);
+      expect(interval2).toBe(5);
     });
 
     it('should return null for invalid interval calculation', () => {
@@ -302,10 +297,10 @@ describe('InstrumentRegistry', () => {
       const guitar = DEFAULT_INSTRUMENTS['guitarra-6'];
       
       // Verificar se é baixo
-      const isBass = instrumentRegistry['instrumentUtils']?.isBass?.('baixo-4');
+      const isBass = instrumentUtils.isBass('baixo-4');
       expect(isBass).toBe(true);
       
-      const isNotBass = instrumentRegistry['instrumentUtils']?.isBass?.('guitarra-6');
+      const isNotBass = instrumentUtils.isBass('guitarra-6');
       expect(isNotBass).toBe(false);
     });
   });

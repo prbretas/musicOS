@@ -36,3 +36,7 @@ coverage/
 *.tgz
 *.tsbuildinfo
 .cache/
+# Playwright
+playwright-report/
+test-results/
+blob-report/

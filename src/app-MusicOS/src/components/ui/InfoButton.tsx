@@ -16,7 +16,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Info, X } from "lucide-react";
 
 // ============================================
@@ -65,6 +65,26 @@ export function InfoButton({
 }: InfoButtonProps) {
   // Estado para controlar se o popup está aberto ou fechado
   const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Fecha ao clicar fora ou ao pressionar Esc
+  useEffect(() => {
+    if (!isOpen) return;
+    const onMouseDown = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsOpen(false);
+    };
+    document.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onMouseDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [isOpen]);
 
   // ============================================
   // ESTILOS DINÂMICOS
@@ -97,7 +117,7 @@ export function InfoButton({
 
   return (
     // Container posicionado relativamente para permitir absolute children
-    <div className="relative inline-block">
+    <div ref={containerRef} className="relative inline-block">
       
       {/* 
        * BOTÃO DE INFO
@@ -126,13 +146,14 @@ export function InfoButton({
        */}
       {isOpen && (
         <div 
+          role="dialog"
           className={`
-            absolute z-50 w-72 p-4 
+            z-50 w-72 p-4 
             bg-white dark:bg-gray-800 rounded-lg shadow-xl 
             border border-gray-200 dark:border-gray-700
             animate-in fade-in zoom-in duration-200
-            ${position === "top-right" ? "top-6 right-0 mt-2" : 
-              position === "top-left" ? "top-6 left-0 mt-2" : 
+            ${position === "top-right" ? "absolute top-6 right-0 mt-2" : 
+              position === "top-left" ? "absolute top-6 left-0 mt-2" : 
               "static ml-2"}
           `}
         >
@@ -145,6 +166,7 @@ export function InfoButton({
             )}
             <button 
               onClick={() => setIsOpen(false)}  // Fecha o popup
+              aria-label="Fechar"
               className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0"
             >
               <X size={16} />
