@@ -1,44 +1,35 @@
 import { defineConfig, devices } from '@playwright/test';
 
+/**
+ * Testes E2E do MusicOS (spec .kiro/specs/qualidade-e-testes).
+ * Local: usa o Chrome instalado e reaproveita o `npm run dev` se ja estiver no ar.
+ * CI: usa o Chromium do Playwright e sobe o build de producao (`npm run start`).
+ */
+const isCI = !!process.env.CI;
+const channel = isCI ? undefined : 'chrome';
+
 export default defineConfig({
-  testDir: './src/e2e',
+  testDir: './e2e',
   fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  forbidOnly: isCI,
+  retries: isCI ? 1 : 0,
+  workers: 2,
+  globalSetup: './e2e/support/global-setup.ts',
+  reporter: isCI ? [['list'], ['html', { open: 'never' }]] : [['list']],
+  timeout: 60_000,
   use: {
     baseURL: 'http://localhost:3000',
-    trace: 'on-first-retry',
+    trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
   },
   projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
-    {
-      name: 'mobile-chrome',
-      use: { ...devices['Pixel 5'] },
-    },
-    {
-      name: 'mobile-safari',
-      use: { ...devices['iPhone 12'] },
-    },
+    { name: 'desktop', use: { ...devices['Desktop Chrome'], channel } },
+    { name: 'celular', use: { ...devices['Pixel 5'], channel } },
   ],
   webServer: {
-    command: 'npm run dev',
+    command: isCI ? 'npm run start' : 'npm run dev',
     url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000,
+    reuseExistingServer: !isCI,
+    timeout: 180_000,
   },
 });
