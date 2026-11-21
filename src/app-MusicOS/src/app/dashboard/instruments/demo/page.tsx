@@ -233,7 +233,7 @@ export default function InstrumentRegistryDemoPage() {
                   </li>
                   <li className="flex items-start">
                     <span className="text-green-500 mr-2">✓</span>
-                    <span><strong>Clique em "Personalizada"</strong> para criar sua própria afinação</span>
+                    <span><strong>Clique em &quot;Personalizada&quot;</strong> para criar sua própria afinação</span>
                   </li>
                   <li className="flex items-start">
                     <span className="text-green-500 mr-2">✓</span>

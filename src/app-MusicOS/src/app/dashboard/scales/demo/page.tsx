@@ -149,7 +149,7 @@ export default function ScaleHeroDemoPage() {
             <div className="border border-slate-200 dark:border-slate-700 rounded-lg p-4">
               <h4 className="font-semibold text-slate-800 dark:text-white mb-2">Blues Scale</h4>
               <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                Perfect for authentic blues and rock 'n' roll sound.
+                Perfect for authentic blues and rock &apos;n&apos; roll sound.
               </p>
               <ScaleHero 
                 initialRoot="A"
