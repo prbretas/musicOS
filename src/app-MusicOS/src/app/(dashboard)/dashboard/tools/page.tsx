@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { InfoButton } from '@/components/ui/InfoButton';
+import { CircleOfFifths as SharedCircleOfFifths } from '@/components/estudio/CircleOfFifths';
 
 export default function ToolsPage() {
   const [activeTool, setActiveTool] = useState<'metronome' | 'tuner' | 'circle'>('metronome');
@@ -235,105 +236,10 @@ function Tuner() {
 }
 
 function CircleOfFifths() {
-  const NOTES = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'Db', 'Ab', 'Eb', 'Bb', 'F'];
-  const RELATIVE_MINORS = ['Am', 'Em', 'Bm', 'F#m', 'C#m', 'G#m', 'Ebm', 'Bbm', 'Fm', 'Cm', 'Gm', 'Dm'];
-
   return (
-    <div className="space-y-8">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">
-          Círculo das Quintas
-        </h2>
-        <p className="text-slate-500 dark:text-slate-400">
-          Cada nota está uma 5ª acima da anterior no sentido horário
-        </p>
-      </div>
-
-      {/* Circle visualization */}
-      <div className="flex justify-center">
-        <div className="relative w-80 h-80">
-          {/* Outer ring - Major keys */}
-          {NOTES.map((note, idx) => {
-            const angle = (idx * 30 - 90) * (Math.PI / 180);
-            const radius = 140;
-            const x = Math.cos(angle) * radius;
-            const y = Math.sin(angle) * radius;
-
-            return (
-              <div
-                key={note}
-                className="absolute transform -translate-x-1/2 -translate-y-1/2"
-                style={{
-                  left: `calc(50% + ${x}px)`,
-                  top: `calc(50% + ${y}px)`,
-                }}
-              >
-                <button
-                  className={`
-                    w-14 h-14 rounded-full flex items-center justify-center font-bold
-                    transition-all hover:scale-110
-                    ${idx % 2 === 0 ? 'bg-purple-500 text-white' : 'bg-pink-500 text-white'}
-                  `}
-                >
-                  {note.replace('#', '♯')}
-                </button>
-              </div>
-            );
-          })}
-
-          {/* Inner ring - Minor keys */}
-          {RELATIVE_MINORS.map((note, idx) => {
-            const angle = (idx * 30 - 90 + 15) * (Math.PI / 180);
-            const radius = 90;
-            const x = Math.cos(angle) * radius;
-            const y = Math.sin(angle) * radius;
-
-            return (
-              <div
-                key={note}
-                className="absolute transform -translate-x-1/2 -translate-y-1/2"
-                style={{
-                  left: `calc(50% + ${x}px)`,
-                  top: `calc(50% + ${y}px)`,
-                }}
-              >
-                <button
-                  className={`
-                    w-12 h-12 rounded-full flex items-center justify-center text-sm font-medium
-                    transition-all hover:scale-110
-                    ${idx % 2 === 0 ? 'bg-slate-400 text-white' : 'bg-slate-300 text-slate-700'}
-                  `}
-                >
-                  {note.replace('#', '♯')}
-                </button>
-              </div>
-            );
-          })}
-
-          {/* Center */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
-              <span className="text-white font-bold text-xl">M</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Legend */}
-      <div className="flex flex-wrap justify-center gap-6 text-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full bg-purple-500"></div>
-          <span className="text-slate-600 dark:text-slate-400">Tônicas maiores</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full bg-pink-500"></div>
-          <span className="text-slate-600 dark:text-slate-400">Relativas maiores</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full bg-slate-400"></div>
-          <span className="text-slate-600 dark:text-slate-400">Relativas menores</span>
-        </div>
-      </div>
+    <div className="space-y-4">
+      <h2 className="text-2xl font-bold text-center text-slate-800 dark:text-white">Ciclo de Quintas</h2>
+      <SharedCircleOfFifths />
     </div>
   );
 }

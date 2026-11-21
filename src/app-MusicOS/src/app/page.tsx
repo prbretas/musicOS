@@ -1,167 +1,193 @@
-import Link from "next/link";
+'use client';
 
-export default function Home() {
+/**
+ * MusicOS - Estudio de Escalas.
+ * Layout e conteudo portados do MusicPages (src/musicpages): um seletor de
+ * tonica/escala no topo controla todas as secoes da pagina.
+ */
+
+import { useMemo, useState } from 'react';
+import Link from 'next/link';
+import { SCALES, SCALE_GROUP_LABELS, buildScale, harmonicField, type ScaleGroup } from '@/lib/music/escalas';
+import { Section } from '@/components/estudio/Section';
+import { ScaleHeroCard } from '@/components/estudio/ScaleHeroCard';
+import { IntervalTable } from '@/components/estudio/IntervalTable';
+import { ScaleNotesPanel } from '@/components/estudio/ScaleNotesPanel';
+import { PianoKeyboard } from '@/components/estudio/PianoKeyboard';
+import { FretboardSection, type InstrumentType } from '@/components/estudio/FretboardSection';
+import { ChordFieldViewer } from '@/components/estudio/ChordFieldViewer';
+import { CircleOfFifths } from '@/components/estudio/CircleOfFifths';
+import { FloatingPanel } from '@/components/estudio/FloatingPanel';
+import { MetronomePanel } from '@/components/estudio/MetronomePanel';
+import { ScaleStructuresTable } from '@/components/estudio/ScaleStructuresTable';
+
+const TONICS = ['C', 'C# / Db', 'D', 'D# / Eb', 'E', 'F', 'F# / Gb', 'G', 'G# / Ab', 'A', 'A# / Bb', 'B'];
+
+const NAV = [
+  ['escala', 'Escala'],
+  ['intervalos', 'Intervalos'],
+  ['transpositor', 'Notas e Campo'],
+  ['teclado', 'Teclado'],
+  ['braco', 'Braço'],
+  ['acordes', 'Acordes'],
+  ['ciclo', 'Ciclo de Quintas'],
+] as const;
+
+const OTHER_SCREENS = [
+  ['/dashboard', 'Dashboard'],
+  ['/dashboard/exercises', 'Exercícios'],
+  ['/dashboard/tools', 'Ferramentas'],
+  ['/pricing', 'Planos'],
+  ['/login', 'Login'],
+  ['/signup', 'Cadastro'],
+];
+
+export default function EstudioPage() {
+  const [rootPc, setRootPc] = useState(0);
+  const [scaleKey, setScaleKey] = useState('maior');
+  const [instrument, setInstrument] = useState<InstrumentType>('guitar');
+  const [tetrads, setTetrads] = useState(true);
+  const [panel, setPanel] = useState<'metronomo' | 'estruturas' | null>(null);
+
+  const scale = useMemo(() => buildScale(rootPc, scaleKey), [rootPc, scaleKey]);
+  const field = useMemo(() => harmonicField(scale, tetrads), [scale, tetrads]);
+  const keyPc = scale.def.parentOffset !== undefined ? (rootPc + scale.def.parentOffset) % 12 : null;
+
+  const groups = (Object.keys(SCALE_GROUP_LABELS) as ScaleGroup[]).map((g) => ({
+    group: g,
+    scales: SCALES.filter((s) => s.group === g),
+  }));
+
+  const select = 'bg-slate-800 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm';
+  const toolBtn = (active: boolean) =>
+    `px-3 py-2 rounded-lg text-sm font-semibold ${active ? 'bg-blue-500 text-white' : 'bg-blue-600 hover:bg-blue-500 text-white'}`;
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
-      {/* Hero Section */}
-      <header className="container mx-auto px-4 py-16 text-center">
-        <h1 className="text-5xl font-black mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          MusicOS
-        </h1>
-        <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
-          O sistema operacional da sua jornada musical. Teoria e prática integradas
-          em uma plataforma completa e acessível.
-        </p>
-        <div className="flex gap-4 justify-center flex-wrap">
-          <Link
-            href="/login"
-            className="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-          >
-            Começar Grátis
+    <div className="min-h-screen bg-[#1e1e1e] text-slate-200 flex flex-col">
+      {/* Topbar fixa: tonica, escala, instrumento e ferramentas */}
+      <header className="sticky top-0 z-40 bg-[#141414]/95 backdrop-blur border-b border-slate-800">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
+          <Link href="/" className="text-xl font-black text-white mr-auto">
+            🎵 MusicOS
           </Link>
-          <Link
-            href="#features"
-            className="px-8 py-3 border-2 border-blue-600 text-blue-600 dark:text-blue-400 rounded-lg font-semibold hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+
+          <label className="sr-only" htmlFor="tonica">
+            Tônica
+          </label>
+          <select id="tonica" value={rootPc} onChange={(e) => setRootPc(Number(e.target.value))} className={select}>
+            {TONICS.map((t, i) => (
+              <option key={t} value={i}>
+                {t}
+              </option>
+            ))}
+          </select>
+
+          <label className="sr-only" htmlFor="tipoEscala">
+            Escala
+          </label>
+          <select id="tipoEscala" value={scaleKey} onChange={(e) => setScaleKey(e.target.value)} className={select}>
+            {groups.map(({ group, scales }) => (
+              <optgroup key={group} label={`- ${SCALE_GROUP_LABELS[group]} -`}>
+                {scales.map((s) => (
+                  <option key={s.key} value={s.key}>
+                    {s.label}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+
+          <label className="sr-only" htmlFor="instrumento">
+            Instrumento
+          </label>
+          <select
+            id="instrumento"
+            value={instrument}
+            onChange={(e) => setInstrument(e.target.value as InstrumentType)}
+            className={select}
           >
-            Ver Features
-          </Link>
+            <option value="guitar">🎸 Guitarra / Violão</option>
+            <option value="ukulele">🪕 Ukulele</option>
+          </select>
+
+          <button onClick={() => setPanel(panel === 'metronomo' ? null : 'metronomo')} className={toolBtn(panel === 'metronomo')}>
+            ⏱ Metrônomo
+          </button>
+          <button onClick={() => setPanel(panel === 'estruturas' ? null : 'estruturas')} className={toolBtn(panel === 'estruturas')}>
+            📖 Estruturas
+          </button>
         </div>
+
+        <nav className="max-w-6xl mx-auto px-4 pb-2 flex gap-4 overflow-x-auto text-sm" aria-label="Seções">
+          {NAV.map(([id, label]) => (
+            <a key={id} href={`#${id}`} className="text-slate-400 hover:text-white whitespace-nowrap">
+              {label}
+            </a>
+          ))}
+        </nav>
       </header>
 
-      {/* Features Section */}
-      <section id="features" className="container mx-auto px-4 py-16">
-        <h2 className="text-3xl font-bold text-center mb-12">
-          Tudo Que Você Precisa Para Aprender Música
-        </h2>
-        
-        <div className="grid md:grid-cols-3 gap-8">
-          {/* Teoria */}
-          <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
-            <div className="text-4xl mb-4">📐</div>
-            <h3 className="text-xl font-semibold mb-2">Teoria Musical</h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              Escalas, modos, campo harmônico e círculo de quintas explicados
-              de forma visual e interativa.
-            </p>
-          </div>
+      <main className="max-w-6xl mx-auto w-full px-4 py-8 space-y-14 flex-1">
+        <section id="escala" className="scroll-mt-28">
+          <ScaleHeroCard scale={scale} rootPc={rootPc} />
+        </section>
 
-          {/* Prática */}
-          <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
-            <div className="text-4xl mb-4">🎸</div>
-            <h3 className="text-xl font-semibold mb-2">Fretboard Interativo</h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              Veja as notas no braço do instrumento, destaque de escalas e
-              acordes com áudio em tempo real.
-            </p>
-          </div>
+        <Section id="intervalos" icon="📊" title={`Tabela de Intervalos - ${scale.root} ${scale.def.label}`}>
+          <IntervalTable scale={scale} />
+        </Section>
 
-          {/* Educacional */}
-          <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
-            <div className="text-4xl mb-4">📚</div>
-            <h3 className="text-xl font-semibold mb-2">Educação Contextual</h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              Explicações em cada seção. Clique no &quot;i&quot; para entender
-              os conceitos enquanto pratica.
-            </p>
-          </div>
+        <Section id="transpositor" icon="🎹" title="Transpositor de Escalas Musicais">
+          <ScaleNotesPanel scale={scale} field={field} tetrads={tetrads} onTetradsChange={setTetrads} />
+        </Section>
 
-          {/* Exercícios */}
-          <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
-            <div className="text-4xl mb-4">🎯</div>
-            <h3 className="text-xl font-semibold mb-2">Exercícios Guiados</h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              Gerador de exercícios de escalas, progressões e técnicas
-              com metrônomo integrado.
-            </p>
-          </div>
+        <Section id="teclado" icon="🎹" title="Teclado">
+          <PianoKeyboard scale={scale} />
+        </Section>
 
-          {/* Multi-instrumento */}
-          <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
-            <div className="text-4xl mb-4">🎵</div>
-            <h3 className="text-xl font-semibold mb-2">Multi-instrumento</h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              Guitarra, violão, ukulele, baixo e mais. Todos com afinações
-              customizáveis.
-            </p>
-          </div>
+        <Section id="braco" icon="🎸" title={`Braço do Instrumento — ${instrument === 'guitar' ? 'Guitarra' : 'Ukulele'}`}>
+          <FretboardSection scale={scale} instrument={instrument} />
+        </Section>
 
-          {/* Preço */}
-          <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
-            <div className="text-4xl mb-4">💰</div>
-            <h3 className="text-xl font-semibold mb-2">Acessível</h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              Por apenas <strong>R$9,90/mês</strong>, 89% mais barato que
-              apps similares. Versão gratuita disponível.
-            </p>
-          </div>
-        </div>
-      </section>
+        <Section id="acordes" icon="🎸" title={`Visualizador de Acordes — ${tetrads ? 'tétrades' : 'tríades'}`}>
+          <ChordFieldViewer field={field} />
+        </Section>
 
-      {/* Pricing Section */}
-      <section className="bg-gray-100 dark:bg-gray-900 py-16">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">Planos</h2>
-          
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {/* Free */}
-            <div className="p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
-              <h3 className="text-2xl font-bold mb-4">Free</h3>
-              <p className="text-4xl font-black text-blue-600 mb-6">R$0</p>
-              <p className="text-gray-600 dark:text-gray-300 mb-6">Para experimentar</p>
-              <ul className="space-y-3 mb-8">
-                <li>✅ 5 tonalidades básicas</li>
-                <li>✅ Escalas Maior/Menor</li>
-                <li>✅ Fretboard interativo</li>
-                <li>✅ Acordes essenciais</li>
-                <li>✅ Metrônomo básico</li>
-              </ul>
-              <Link
-                href="/login"
-                className="block text-center py-3 border-2 border-blue-600 text-blue-600 rounded-lg font-semibold hover:bg-blue-50"
-              >
-                Começar Grátis
-              </Link>
-            </div>
+        <Section id="ciclo" icon="⭕" title="Ciclo de Quintas">
+          <CircleOfFifths
+            keyPc={keyPc}
+            minor={scale.def.parentOffset === 3}
+            onApply={(pcValue, key) => {
+              setRootPc(pcValue);
+              setScaleKey(key);
+            }}
+          />
+        </Section>
+      </main>
 
-            {/* Pro */}
-            <div className="p-8 bg-gradient-to-br from-blue-600 to-purple-700 rounded-2xl shadow-lg text-white relative">
-              <div className="absolute -top-4 right-8 bg-yellow-400 text-black px-4 py-1 rounded-full text-sm font-bold">
-                Mais Popular
-              </div>
-              <h3 className="text-2xl font-bold mb-4">Pro</h3>
-              <p className="text-4xl font-black mb-6">R$9,90<span className="text-lg font-normal">/mês</span></p>
-              <p className="opacity-90 mb-6">Para músicos dedicados</p>
-              <ul className="space-y-3 mb-8">
-                <li>✅ Todas as 12 tonalidades</li>
-                <li>✅ Todos os modos gregos</li>
-                <li>✅ Multi-instrumento completo</li>
-                <li>✅ Campo harmônico completo</li>
-                <li>✅ Exercícios ilimitados</li>
-                <li>✅ Técnicas instrumentais</li>
-                <li>✅ Progresso sincronizado</li>
-              </ul>
-              <Link
-                href="/login"
-                className="block text-center py-3 bg-white text-blue-600 rounded-lg font-semibold hover:bg-gray-100"
-              >
-                Assinar Agora
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-8">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-gray-400">
-            © 2026 MusicOS. Desenvolvido com ❤️ para músicos.
-          </p>
-          <p className="text-sm text-gray-500 mt-2">
-            Evolução do projeto musicpages
-          </p>
-        </div>
+      <footer className="border-t border-slate-800 py-6 text-center text-sm text-slate-500 space-x-4">
+        {OTHER_SCREENS.map(([href, label]) => (
+          <Link key={href} href={href} className="hover:text-slate-300">
+            {label}
+          </Link>
+        ))}
       </footer>
+
+      {panel === 'metronomo' && (
+        <FloatingPanel title="Metrônomo Digital" onClose={() => setPanel(null)}>
+          <MetronomePanel />
+        </FloatingPanel>
+      )}
+      {panel === 'estruturas' && (
+        <FloatingPanel title="📖 Estruturas de Escalas" onClose={() => setPanel(null)} wide>
+          <ScaleStructuresTable
+            current={scaleKey}
+            onSelect={(k) => {
+              setScaleKey(k);
+              setPanel(null);
+            }}
+          />
+        </FloatingPanel>
+      )}
     </div>
   );
 }
