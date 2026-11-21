@@ -1,0 +1,3 @@
+[submodule "src/musicpages"]
+	path = src/musicpages
+	url = https://github.com/prbretas/musicpages.git

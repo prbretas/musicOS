@@ -1,6 +1,6 @@
-import { supabase } from '@/lib/supabase/client';
-import { useEffect, useState, useCallback } from 'react';
-import type { User } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/client';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import type { User, SupabaseClient } from '@supabase/supabase-js';
 
 interface AuthState {
   user: User | null;
@@ -15,20 +15,20 @@ export function useAuth() {
     error: null,
   });
 
+  const supabaseRef = useRef<SupabaseClient>(createClient());
+
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
+    const supabase = supabaseRef.current;
+    
+    supabase.auth.getSession().then(({ data, error }) => {
       setState({
-        user: session?.user ?? null,
+        user: data.session?.user ?? null,
         loading: false,
         error: error ? new Error(error.message) : null,
       });
     });
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setState({
         user: session?.user ?? null,
         loading: false,
@@ -40,84 +40,35 @@ export function useAuth() {
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
-    setState((prev) => ({ ...prev, loading: true, error: null }));
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
+    setState(prev => ({ ...prev, loading: true, error: null }));
+    const { error } = await supabaseRef.current.auth.signInWithPassword({ email, password });
     if (error) {
-      setState((prev) => ({
-        ...prev,
-        loading: false,
-        error: new Error(error.message),
-      }));
+      setState(prev => ({ ...prev, loading: false, error: new Error(error.message) }));
       return { error };
     }
-
     return { error: null };
   }, []);
 
   const signUp = useCallback(async (email: string, password: string, name: string) => {
-    setState((prev) => ({ ...prev, loading: true, error: null }));
-
-    const { error } = await supabase.auth.signUp({
+    setState(prev => ({ ...prev, loading: true, error: null }));
+    const { error } = await supabaseRef.current.auth.signUp({
       email,
       password,
-      options: {
-        data: {
-          name,
-        },
-      },
+      options: { data: { name } },
     });
-
     if (error) {
-      setState((prev) => ({
-        ...prev,
-        loading: false,
-        error: new Error(error.message),
-      }));
+      setState(prev => ({ ...prev, loading: false, error: new Error(error.message) }));
       return { error };
     }
-
     return { error: null };
   }, []);
 
   const signOut = useCallback(async () => {
-    setState((prev) => ({ ...prev, loading: true, error: null }));
-
-    const { error } = await supabase.auth.signOut();
-
+    setState(prev => ({ ...prev, loading: true, error: null }));
+    const { error } = await supabaseRef.current.auth.signOut();
     if (error) {
-      setState((prev) => ({
-        ...prev,
-        loading: false,
-        error: new Error(error.message),
-      }));
+      setState(prev => ({ ...prev, loading: false, error: new Error(error.message) }));
     }
-
-    return { error: error ? new Error(error.message) : null };
-  }, []);
-
-  const signInWithGoogle = useCallback(async () => {
-    setState((prev) => ({ ...prev, loading: true, error: null }));
-
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/dashboard`,
-      },
-    });
-
-    if (error) {
-      setState((prev) => ({
-        ...prev,
-        loading: false,
-        error: new Error(error.message),
-      }));
-    }
-
     return { error: error ? new Error(error.message) : null };
   }, []);
 
@@ -126,6 +77,5 @@ export function useAuth() {
     signIn,
     signUp,
     signOut,
-    signInWithGoogle,
   };
 }

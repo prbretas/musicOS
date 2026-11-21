@@ -73,7 +73,7 @@
 
 | ID | Task | Esforço | Dependências | Status |
 |----|------|---------|--------------|--------|
-| **INF-005** | Setup Supabase Free Tier | **S** | Nenhuma | 🔵 backlog |
+| **INF-005** | Setup Supabase Free Tier | **S** | Nenhuma | 🟡 spec |
 | **CORE-001** | Music Theory Engine | **L** | Nenhuma | 🔵 backlog |
 | **CORE-003** | AudioEngine | **M** | Nenhuma | 🔵 backlog |
 | **CMP-004** | ScaleDisplay | **M** | CORE-001 | 🔵 backlog |

@@ -1,0 +1,10 @@
+{
+  "name": "MusicOS - Sistema Operacional da Música",
+  "short_name": "MusicOS",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1e1e1e",
+  "theme_color": "#3b82f6",
+  "lang": "pt-BR",
+  "icons": []
+}
