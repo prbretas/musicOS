@@ -2,11 +2,16 @@
  * Tests for useInstrument hook
  */
 
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useInstrument, useInstrumentManager } from '@/hooks/useInstrument';
+import { instrumentRegistry } from '@/lib/music/instruments/registry';
+import type { InstrumentProfile, NoteName } from '@/types/music';
+
+const registryMock = instrumentRegistry as any;
 
 // Mock do instrumentRegistry para evitar efeitos colaterais
-jest.mock('@/lib/music/instruments/registry', () => {
+vi.mock('@/lib/music/instruments/registry', () => {
   const mockInstrument = {
     id: 'guitarra-6',
     name: 'Guitarra (6 cordas)',
@@ -18,31 +23,32 @@ jest.mock('@/lib/music/instruments/registry', () => {
   };
 
   const mockRegistry = {
-    getAll: jest.fn(() => [mockInstrument]),
-    getById: jest.fn((id) => id === 'guitarra-6' ? mockInstrument : null),
-    getDefault: jest.fn(() => mockInstrument),
-    setDefaultInstrument: jest.fn(),
-    getDefaultTuning: jest.fn(() => ['E', 'A', 'D', 'G', 'B', 'E']),
-    getAvailableTunings: jest.fn(() => [
+    getAll: vi.fn(() => [mockInstrument]),
+    getById: vi.fn((id) => id === 'guitarra-6' ? mockInstrument : null),
+    getDefault: vi.fn(() => mockInstrument),
+    setDefaultInstrument: vi.fn(),
+    getDefaultTuning: vi.fn(() => ['E', 'A', 'D', 'G', 'B', 'E']),
+    getAvailableTunings: vi.fn(() => [
       { id: 'standard', name: 'Padrão', tuning: ['E', 'A', 'D', 'G', 'B', 'E'] },
       { id: 'drop-d', name: 'Drop D', tuning: ['D', 'A', 'D', 'G', 'B', 'E'] },
     ]),
-    saveCustomTuning: jest.fn(() => true),
-    calculateNoteAtPosition: jest.fn(() => 'C'),
-    findNotePositions: jest.fn(() => [{ string: 0, fret: 3 }, { string: 1, fret: 8 }]),
-    registerInstrument: jest.fn(() => true),
-    removeInstrument: jest.fn(() => true),
+    saveCustomTuning: vi.fn(() => true),
+    calculateNoteAtPosition: vi.fn(() => 'C'),
+    findNotePositions: vi.fn(() => [{ string: 0, fret: 3 }, { string: 1, fret: 8 }]),
+    registerInstrument: vi.fn(() => true),
+    removeInstrument: vi.fn(() => true),
   };
 
   return {
     instrumentRegistry: mockRegistry,
+    instrumentUtils: { isBass: vi.fn(() => false) },
     DEFAULT_INSTRUMENTS: { 'guitarra-6': mockInstrument },
   };
 });
 
 describe('useInstrument Hook', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Basic Functionality', () => {
@@ -80,7 +86,7 @@ describe('useInstrument Hook', () => {
 
   describe('Instrument Management', () => {
     it('should allow changing instrument', () => {
-      const onInstrumentChange = jest.fn();
+      const onInstrumentChange = vi.fn();
       const { result } = renderHook(() => 
         useInstrument({ onInstrumentChange })
       );
@@ -104,14 +110,13 @@ describe('useInstrument Hook', () => {
     });
 
     it('should call onInstrumentChange callback', () => {
-      const onInstrumentChange = jest.fn();
+      const onInstrumentChange = vi.fn();
       const { result } = renderHook(() => 
         useInstrument({ onInstrumentChange })
       );
 
       // Mock do getById para retornar um instrumento válido
-      const mockRegistry = require('@/lib/music/instruments/registry').instrumentRegistry;
-      mockRegistry.getById.mockReturnValueOnce({
+      registryMock.getById.mockReturnValueOnce({
         id: 'ukulele',
         name: 'Ukulele',
         strings: 4,
@@ -126,18 +131,18 @@ describe('useInstrument Hook', () => {
       });
 
       expect(onInstrumentChange).toHaveBeenCalled();
-      expect(mockRegistry.setDefaultInstrument).toHaveBeenCalledWith('ukulele');
+      expect(registryMock.setDefaultInstrument).toHaveBeenCalledWith('ukulele');
     });
   });
 
   describe('Tuning Management', () => {
     it('should allow changing tuning', () => {
-      const onTuningChange = jest.fn();
+      const onTuningChange = vi.fn();
       const { result } = renderHook(() => 
         useInstrument({ onTuningChange })
       );
 
-      const newTuning = ['D', 'A', 'D', 'G', 'B', 'E']; // Drop D
+      const newTuning: NoteName[] = ['D', 'A', 'D', 'G', 'B', 'E']; // Drop D
 
       act(() => {
         const success = result.current.setTuning(newTuning);
@@ -152,7 +157,7 @@ describe('useInstrument Hook', () => {
       const { result } = renderHook(() => useInstrument());
       
       act(() => {
-        const invalidTuning = ['C', 'D']; // Muito curto
+        const invalidTuning: NoteName[] = ['C', 'D']; // Muito curto
         const success = result.current.setTuning(invalidTuning);
         expect(success).toBe(false);
       });
@@ -160,14 +165,13 @@ describe('useInstrument Hook', () => {
 
     it('should save custom tuning', () => {
       const { result } = renderHook(() => useInstrument());
-      const mockRegistry = require('@/lib/music/instruments/registry').instrumentRegistry;
 
       act(() => {
         const success = result.current.saveCustomTuning('my-tuning', ['D', 'A', 'D', 'G', 'B', 'E']);
         expect(success).toBe(true);
       });
 
-      expect(mockRegistry.saveCustomTuning).toHaveBeenCalledWith(
+      expect(registryMock.saveCustomTuning).toHaveBeenCalledWith(
         'my-tuning',
         ['D', 'A', 'D', 'G', 'B', 'E'],
         'guitarra-6'
@@ -178,12 +182,11 @@ describe('useInstrument Hook', () => {
   describe('Fretboard Calculations', () => {
     it('should calculate note at position', () => {
       const { result } = renderHook(() => useInstrument());
-      const mockRegistry = require('@/lib/music/instruments/registry').instrumentRegistry;
 
       const note = result.current.calculateNoteAtPosition(0, 3);
       
       expect(note).toBe('C');
-      expect(mockRegistry.calculateNoteAtPosition).toHaveBeenCalledWith(
+      expect(registryMock.calculateNoteAtPosition).toHaveBeenCalledWith(
         'guitarra-6',
         0,
         3
@@ -192,12 +195,11 @@ describe('useInstrument Hook', () => {
 
     it('should find note positions', () => {
       const { result } = renderHook(() => useInstrument());
-      const mockRegistry = require('@/lib/music/instruments/registry').instrumentRegistry;
 
       const positions = result.current.findNotePositions('C');
       
       expect(positions).toHaveLength(2);
-      expect(mockRegistry.findNotePositions).toHaveBeenCalledWith(
+      expect(registryMock.findNotePositions).toHaveBeenCalledWith(
         'guitarra-6',
         'C'
       );
@@ -207,7 +209,7 @@ describe('useInstrument Hook', () => {
 
 describe('useInstrumentManager Hook', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should return instrument manager', () => {
@@ -231,8 +233,8 @@ describe('useInstrumentManager Hook', () => {
 
   it('should add instrument', () => {
     const { result } = renderHook(() => useInstrumentManager());
-    const mockRegistry = require('@/lib/music/instruments/registry').instrumentRegistry;
     
+    // id fora da lista de instrumentos padrao: e justamente o caso de "instrumento novo"
     const newInstrument = {
       id: 'custom-1',
       name: 'Custom Instrument',
@@ -241,24 +243,23 @@ describe('useInstrumentManager Hook', () => {
       octaves: [1, 1, 2, 2, 2, 3, 3],
       frets: 24,
       fretless: false,
-    };
+    } as InstrumentProfile;
     
     act(() => {
       result.current.addInstrument(newInstrument);
     });
     
-    expect(mockRegistry.registerInstrument).toHaveBeenCalledWith(newInstrument);
+    expect(registryMock.registerInstrument).toHaveBeenCalledWith(newInstrument);
   });
 
   it('should remove instrument', () => {
     const { result } = renderHook(() => useInstrumentManager());
-    const mockRegistry = require('@/lib/music/instruments/registry').instrumentRegistry;
     
     act(() => {
       result.current.removeInstrument('custom-1');
     });
     
-    expect(mockRegistry.removeInstrument).toHaveBeenCalledWith('custom-1');
+    expect(registryMock.removeInstrument).toHaveBeenCalledWith('custom-1');
   });
 
   it('should check if instrument exists', () => {
