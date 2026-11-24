@@ -51,6 +51,21 @@ No Windows, `INICIAR-MUSICOS.bat` faz o mesmo.
 3. Settings → Billing → Customer portal: ative e permita cancelamento e troca de forma de pagamento.
 4. Em desenvolvimento: `stripe listen --forward-to localhost:3000/api/webhooks/stripe`.
 
+## Rodando em container (Podman ou Docker)
+
+Com o `.env.local` preenchido (passos acima):
+
+```bash
+podman compose --env-file src/app-MusicOS/.env.local up -d --build   # sobe em http://localhost:3000
+podman compose logs -f        # acompanha os logs
+podman compose stop           # pausa (podman compose start retoma)
+podman compose down           # para e remove o container
+```
+
+Com Docker, troque `podman` por `docker`. A imagem é multi-stage (`src/app-MusicOS/Dockerfile`), roda como usuário sem privilégios e tem healthcheck. Para mudar a porta: `PORT=8080 podman compose ...`.
+
+Num servidor de verdade: coloque um proxy com HTTPS na frente (Caddy ou Nginx), ajuste `NEXT_PUBLIC_APP_URL` para o domínio e cadastre `https://SEU-DOMINIO/auth/callback` no Supabase e `https://SEU-DOMINIO/api/webhooks/stripe` no Stripe. Como as variáveis `NEXT_PUBLIC_*` entram no build, mudar o domínio exige `up -d --build` de novo.
+
 ## Testes
 
 ```bash

@@ -1,0 +1,14 @@
+node_modules
+.next
+out
+coverage
+playwright-report
+test-results
+e2e
+.git
+.github
+*.md
+.env*
+!.env.local.example
+Dockerfile
+.dockerignore

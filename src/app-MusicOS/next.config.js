@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Gera um servidor mínimo em .next/standalone, usado pelo Dockerfile (Podman/Docker)
+  output: 'standalone',
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
