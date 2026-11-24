@@ -9,6 +9,23 @@
 -- Quem grava tier/status é o webhook do Stripe (service role). O usuário só lê.
 -- ============================================================
 
+-- Adaptação ao schema v1 já existente neste projeto
+do $$
+begin
+  if exists (select 1 from information_schema.columns where table_schema='public' and table_name='profiles' and column_name='full_name')
+     and not exists (select 1 from information_schema.columns where table_schema='public' and table_name='profiles' and column_name='name') then
+    alter table public.profiles rename column full_name to name;
+  end if;
+end $$;
+drop policy if exists "Users can view their own profile" on public.profiles;
+drop policy if exists "Users can update their own profile" on public.profiles;
+alter table public.profiles alter column email drop not null;
+update public.profiles set subscription_tier = 'free' where subscription_tier is null;
+alter table public.profiles alter column subscription_tier set default 'free';
+alter table public.profiles alter column subscription_tier set not null;
+alter table public.profiles alter column created_at set not null;
+alter table public.profiles alter column updated_at set not null;
+
 -- ------------------------------------------------------------
 -- profiles
 -- ------------------------------------------------------------
@@ -161,3 +178,12 @@ end $$;
 -- Mantida por segurança; pode ser removida depois de conferir os dados:
 --   drop table if exists public.subscriptions;
 -- ------------------------------------------------------------
+
+-- ------------------------------------------------------------
+-- Endurecimento (Security Advisor): search_path fixo e trigger
+-- functions fora da API REST
+-- ------------------------------------------------------------
+alter function public.protect_billing_columns() set search_path = public;
+alter function public.handle_new_user() set search_path = public;
+revoke execute on function public.protect_billing_columns() from anon, authenticated, public;
+revoke execute on function public.handle_new_user() from anon, authenticated, public;
