@@ -28,6 +28,9 @@ function AccountInner() {
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
   const [portalBusy, setPortalBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteText, setDeleteText] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   const checkoutSuccess = params.get('checkout') === 'success';
   const passwordUpdated = params.get('password') === 'updated';
@@ -36,14 +39,19 @@ function AccountInner() {
     setName(profile?.name ?? user?.user_metadata?.name ?? '');
   }, [profile, user]);
 
-  // Depois do checkout o webhook pode levar alguns segundos: recarrega o perfil até virar Pro
+  // Depois do checkout o webhook pode levar alguns segundos: recarrega o perfil até virar Pro.
+  // Se demorar, pede ao servidor para conferir direto no Stripe (não depende do webhook).
   useEffect(() => {
     if (!checkoutSuccess || entitlement.isPro) return;
     let tries = 0;
     const timer = setInterval(() => {
       tries += 1;
-      void refreshProfile();
-      if (tries >= 10) clearInterval(timer);
+      if (tries === 4 || tries === 10) {
+        void fetch('/api/billing/sync', { method: 'POST' }).finally(() => refreshProfile());
+      } else {
+        void refreshProfile();
+      }
+      if (tries >= 15) clearInterval(timer);
     }, 2000);
     return () => clearInterval(timer);
   }, [checkoutSuccess, entitlement.isPro, refreshProfile]);
@@ -71,6 +79,26 @@ function AccountInner() {
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Não foi possível abrir o portal.');
       setPortalBusy(false);
+    }
+  }
+
+  async function handleDeleteAccount() {
+    setDeleting(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/account/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm: deleteText }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) throw new Error(data.error || 'Não foi possível excluir a conta.');
+      await signOut().catch(() => undefined);
+      router.replace('/?conta=excluida');
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Não foi possível excluir a conta.');
+      setDeleting(false);
     }
   }
 
@@ -212,6 +240,52 @@ function AccountInner() {
               Sair da conta
             </button>
           </div>
+        </section>
+
+        {/* Zona de perigo */}
+        <section className="card p-6 border-red-500/30">
+          <h2 className="font-bold text-white text-lg mb-2">Excluir conta</h2>
+          <p className="text-sm text-slate-400 mb-4">
+            Apaga sua conta e seus dados. Se você tiver uma assinatura ativa, ela é cancelada na hora e não haverá
+            novas cobranças. {entitlement.isLifetime && 'O acesso vitalício será perdido. '}Esta ação não pode ser desfeita.
+          </p>
+          {!deleteOpen ? (
+            <button onClick={() => setDeleteOpen(true)} className="btn-ghost text-red-300 hover:text-red-200 border border-red-500/30">
+              Quero excluir minha conta
+            </button>
+          ) : (
+            <div className="space-y-3">
+              <label htmlFor="confirm-delete" className="field-label">
+                Digite EXCLUIR para confirmar
+              </label>
+              <input
+                id="confirm-delete"
+                type="text"
+                value={deleteText}
+                onChange={(e) => setDeleteText(e.target.value)}
+                className="w-full py-3"
+                autoComplete="off"
+              />
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={deleteText !== 'EXCLUIR' || deleting}
+                  className="btn-danger"
+                >
+                  {deleting ? 'Excluindo…' : 'Excluir definitivamente'}
+                </button>
+                <button
+                  onClick={() => {
+                    setDeleteOpen(false);
+                    setDeleteText('');
+                  }}
+                  className="btn-ghost"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          )}
         </section>
 
         <p className="text-xs text-slate-600">

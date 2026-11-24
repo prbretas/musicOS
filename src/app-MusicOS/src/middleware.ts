@@ -11,7 +11,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-const PROTECTED_PREFIXES = ['/account', '/checkout', '/api/stripe/checkout', '/api/stripe/portal'];
+const PROTECTED_PREFIXES = ['/account', '/checkout', '/api/stripe/checkout', '/api/stripe/portal', '/api/billing', '/api/account'];
 const AUTH_PAGES = ['/login', '/signup', '/forgot-password'];
 
 function safeNext(value: string | null, fallback = '/'): string {

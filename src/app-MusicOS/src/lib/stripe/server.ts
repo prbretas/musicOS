@@ -1,5 +1,8 @@
 import Stripe from 'stripe';
 import { STRIPE_PRICE_ENV, type PaidPlanId } from '@/lib/plans';
+import { STRIPE_LOOKUP_KEY, resolvedPriceIds } from './prices';
+
+export { STRIPE_LOOKUP_KEY, planForLookupKey, planForPriceId } from './prices';
 
 let client: Stripe | null = null;
 
@@ -14,18 +17,6 @@ export function getStripe(): Stripe {
   client = new Stripe(key, { apiVersion: '2023-10-16' });
   return client;
 }
-
-/**
- * Chave de pesquisa (lookup_key) de cada plano no Stripe.
- * Crie os preços com estas chaves e os IDs não precisam ir para o .env.
- */
-export const STRIPE_LOOKUP_KEY: Record<PaidPlanId, string> = {
-  pro_monthly: 'musicos_pro_monthly',
-  pro_yearly: 'musicos_pro_yearly',
-  lifetime: 'musicos_lifetime',
-};
-
-const resolvedPriceIds = new Map<PaidPlanId, string>();
 
 /**
  * Price ID do Stripe de um plano pago: lê do ambiente (STRIPE_PRICE_*) ou,
@@ -48,24 +39,6 @@ export async function resolvePriceId(plan: PaidPlanId): Promise<string> {
   }
   resolvedPriceIds.set(plan, price.id);
   return price.id;
-}
-
-/** Plano a partir do Price ID (inverso de resolvePriceId, só para os IDs do ambiente/cache). */
-export function planForPriceId(priceId: string | null | undefined): PaidPlanId | null {
-  if (!priceId) return null;
-  for (const plan of Object.keys(STRIPE_PRICE_ENV) as PaidPlanId[]) {
-    if (process.env[STRIPE_PRICE_ENV[plan]] === priceId || resolvedPriceIds.get(plan) === priceId) return plan;
-  }
-  return null;
-}
-
-/** Plano a partir da lookup_key de um preço (usado pelo webhook quando não há metadata). */
-export function planForLookupKey(lookupKey: string | null | undefined): PaidPlanId | null {
-  if (!lookupKey) return null;
-  for (const plan of Object.keys(STRIPE_LOOKUP_KEY) as PaidPlanId[]) {
-    if (STRIPE_LOOKUP_KEY[plan] === lookupKey) return plan;
-  }
-  return null;
 }
 
 export function appUrl(): string {

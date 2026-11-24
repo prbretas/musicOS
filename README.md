@@ -47,9 +47,10 @@ No Windows, `INICIAR-MUSICOS.bat` faz o mesmo.
 
 1. Products → crie o produto **MusicOS Pro** com dois preços recorrentes (mensal R$ 9,90 e anual R$ 89) e o produto **MusicOS Vitalício** com um preço único (R$ 197). Cole os três `price_...` no `.env.local`.
 2. Developers → Webhooks → endpoint `https://SEU-DOMINIO/api/webhooks/stripe` com os eventos:
-   `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, `invoice.payment_failed`. Copie o **signing secret** para `STRIPE_WEBHOOK_SECRET`.
+   `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, `invoice.payment_failed`, `charge.refunded`, `charge.dispute.created`, `charge.dispute.closed`. Copie o **signing secret** para `STRIPE_WEBHOOK_SECRET`.
 3. Settings → Billing → Customer portal: ative e permita cancelamento e troca de forma de pagamento.
-4. Em desenvolvimento: `stripe listen --forward-to localhost:3000/api/webhooks/stripe`.
+4. Em desenvolvimento: `stripe listen --forward-to localhost:3000/api/webhooks/stripe --all-snapshot`.
+5. Reconciliação diária: defina `CRON_SECRET` e agende `GET /api/cron/reconcile` com `Authorization: Bearer <CRON_SECRET>`. Ela corrige o banco se algum webhook se perder e mantém o e-mail do cliente atualizado no Stripe.
 
 ## Rodando em container (Podman ou Docker)
 
