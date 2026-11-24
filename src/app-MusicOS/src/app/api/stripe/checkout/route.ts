@@ -50,11 +50,15 @@ export async function POST(request: NextRequest) {
     // Cliente no Stripe: reaproveita o existente ou cria e guarda o id no perfil
     let customerId = profile?.stripe_customer_id ?? null;
     if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: user.email ?? undefined,
-        name: profile?.name ?? user.user_metadata?.name ?? undefined,
-        metadata: { userId: user.id },
-      });
+      const customer = await stripe.customers.create(
+        {
+          email: user.email ?? undefined,
+          name: profile?.name ?? user.user_metadata?.name ?? undefined,
+          metadata: { userId: user.id },
+        },
+        // Duplo clique ou retry nunca cria dois clientes para o mesmo usuário
+        { idempotencyKey: `customer-${user.id}` }
+      );
       customerId = customer.id;
       await admin.from('profiles').update({ stripe_customer_id: customerId }).eq('id', user.id);
     }
@@ -70,6 +74,9 @@ export async function POST(request: NextRequest) {
       cancel_url: `${base}/pricing?checkout=canceled`,
       allow_promotion_codes: true,
       locale: 'pt-BR',
+      // Aceite dos Termos registrado pelo Stripe. Exige a URL dos termos em
+      // Settings → Business → Public details; ligue com STRIPE_TOS_CONSENT=1.
+      ...(process.env.STRIPE_TOS_CONSENT === '1' ? { consent_collection: { terms_of_service: 'required' as const } } : {}),
       client_reference_id: user.id,
       metadata: { userId: user.id, plan },
       ...(planInfo.recurring
