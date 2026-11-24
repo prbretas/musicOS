@@ -1,14 +1,8 @@
 import { test } from './support/fixtures';
 import type { Page } from '@playwright/test';
 
-/** Temporário: imprime a captura no log do CI (o artefato não é acessível de todo lugar). */
 async function shot(page: Page, path: string, fullPage: boolean) {
   await page.screenshot({ path, fullPage });
-  if (!process.env.CI) return;
-  const jpg = await page.screenshot({ type: 'jpeg', quality: 45, fullPage, scale: 'css' });
-  const b64 = jpg.toString('base64');
-  const name = path.split('/').pop();
-  for (let i = 0; i < b64.length; i += 8000) process.stdout.write(`TELA:${name}:${b64.slice(i, i + 8000)}\n`);
 }
 
 /**
