@@ -2,176 +2,132 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ------------------------------------------------------------------
+   Tokens — o MusicOS é um estúdio escuro. Há um único tema.
+   ------------------------------------------------------------------ */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
+    --background: 228 24% 6%;
+    --foreground: 220 20% 94%;
+    --card: 226 22% 9%;
+    --card-foreground: 220 20% 94%;
+    --popover: 226 22% 9%;
+    --popover-foreground: 220 20% 94%;
+    --primary: 246 96% 68%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 225 20% 16%;
+    --secondary-foreground: 220 20% 94%;
+    --muted: 225 20% 16%;
+    --muted-foreground: 220 12% 62%;
+    --accent: 225 20% 16%;
+    --accent-foreground: 220 20% 94%;
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 225 18% 18%;
+    --input: 225 18% 18%;
+    --ring: 246 96% 68%;
+    --radius: 0.75rem;
   }
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
-  }
-}
-
-@layer base {
   * {
     @apply border-border;
   }
+
+  html {
+    color-scheme: dark;
+    scroll-behavior: smooth;
+  }
+
   body {
-    @apply bg-background text-foreground;
-    font-family: 'Segoe UI', system-ui, sans-serif;
+    @apply bg-ink-900 text-foreground font-sans antialiased;
+    background-image:
+      radial-gradient(1200px 600px at 10% -10%, rgba(109, 93, 252, 0.12), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(245, 185, 66, 0.06), transparent 55%);
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background: rgba(109, 93, 252, 0.45);
+  }
+
+  /* Campos nativos coerentes com o tema */
+  select,
+  input[type='text'],
+  input[type='email'],
+  input[type='password'],
+  input[type='number'] {
+    @apply bg-ink-700 border border-ink-500 text-foreground rounded-lg px-3 py-2 text-sm outline-none transition-colors;
+  }
+  select:focus,
+  input:focus {
+    @apply border-brand-400 ring-2 ring-brand-500/30;
+  }
+  input[type='checkbox'],
+  input[type='radio'] {
+    accent-color: #6d5dfc;
+  }
+  input[type='range'] {
+    accent-color: #6d5dfc;
   }
 }
 
-/* Fretboard Styles */
+/* ------------------------------------------------------------------
+   Componentes base (usados em todo o app)
+   ------------------------------------------------------------------ */
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/60 disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .btn-primary {
+    @apply btn bg-brand-500 text-white hover:bg-brand-400 shadow-glow;
+  }
+  .btn-secondary {
+    @apply btn bg-ink-600 text-slate-100 hover:bg-ink-500 border border-ink-500;
+  }
+  .btn-ghost {
+    @apply btn text-slate-300 hover:text-white hover:bg-ink-600;
+  }
+  .btn-pro {
+    @apply btn bg-gradient-to-r from-pro-400 to-pro-500 text-ink-900 hover:from-pro-300 hover:to-pro-400 shadow-glow-pro;
+  }
+  .btn-danger {
+    @apply btn bg-red-600/90 text-white hover:bg-red-500;
+  }
+
+  .card {
+    @apply bg-ink-800 border border-ink-600 rounded-2xl shadow-card;
+  }
+
+  .field-label {
+    @apply block text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1.5;
+  }
+
+  .badge-pro {
+    @apply inline-flex items-center gap-1 rounded-md bg-pro-400/15 border border-pro-400/40 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-pro-300;
+  }
+
+  .link {
+    @apply text-brand-300 hover:text-brand-200 underline-offset-4 hover:underline;
+  }
+}
+
+/* ------------------------------------------------------------------
+   Estúdio
+   ------------------------------------------------------------------ */
 .fretboard-container {
   overflow-x: auto;
   overflow-y: hidden;
   position: relative;
 }
 
-.fretboard-string {
-  position: relative;
-  height: 50px;
-  border-bottom: 2px solid #333;
-}
-
-.fretboard-fret {
-  position: absolute;
-  top: 0;
-  height: 100%;
-  border-right: 2px solid #666;
-}
-
-.fretboard-fret-0 {
-  border-right: 4px solid #222;
-}
-
-.note-cell {
-  position: absolute;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-weight: bold;
-  transition: all 0.15s ease;
-}
-
-.note-cell:hover {
-  transform: scale(1.1);
-}
-
-.note-cell.in-scale {
-  background-color: #3b82f6;
-  color: white;
-}
-
-.note-cell.tonic {
-  background-color: #eab308;
-  color: black;
-}
-
-.note-cell.in-chord {
-  background-color: #22c55e;
-  color: white;
-}
-
-.note-cell.chord-root {
-  background-color: #16a34a;
-  color: white;
-  border: 3px solid #fff;
-}
-
-/* Chord Diagram Styles */
-.chord-svg {
-  display: block;
-}
-
-.chord-fret {
-  stroke: #333;
-  stroke-width: 1;
-}
-
-.chord-nut {
-  stroke: #000;
-  stroke-width: 3;
-}
-
-.chord-string {
-  stroke: #666;
-  stroke-width: 1;
-}
-
-.chord-fret-number {
-  font-size: 9px;
-  fill: #666;
-}
-
-/* Circle of Fifths */
-.circle-of-fifths {
-  width: 300px;
-  height: 300px;
-  position: relative;
-  margin: 0 auto;
-}
-
-/* Metronome */
-.metronome-display {
-  font-size: 4rem;
-  font-weight: bold;
-  text-align: center;
-  padding: 2rem;
-}
-
-/* Info Button */
 .info-button {
   cursor: pointer;
   transition: all 0.2s ease;
 }
-
 .info-button:hover {
   transform: scale(1.1);
 }
-
 .info-popup {
   animation: fadeIn 0.2s ease;
 }
@@ -187,34 +143,67 @@
   }
 }
 
-/* Scale Hero */
-.scale-hero {
-  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-  color: white;
-  padding: 2rem;
-  border-radius: 1rem;
-  margin-bottom: 1rem;
+/* Recurso Pro bloqueado: continua visível, mas "desligado" e clicável */
+.pro-locked {
+  position: relative;
+  cursor: pointer;
+}
+.pro-locked > * {
+  pointer-events: none;
+  user-select: none;
+  filter: saturate(0.6);
+  opacity: 0.55;
+}
+.pro-locked::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(11, 13, 18, 0) 0%, rgba(11, 13, 18, 0.55) 100%);
 }
 
-.scale-hero h1 {
-  font-size: 3rem;
-  font-weight: bold;
+/* Scrollbar discreta */
+*::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #2e3547;
+  border-radius: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.scale-hero .notes {
-  font-size: 1.5rem;
-  margin-top: 1rem;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .fretboard-container {
-    font-size: 0.875rem;
+@media print {
+  header,
+  footer,
+  .no-print {
+    display: none !important;
   }
-  
-  .note-cell {
-    width: 32px;
-    height: 32px;
-    font-size: 0.75rem;
+  body {
+    background: #fff !important;
+    color: #111 !important;
   }
+}
+
+/* Páginas legais */
+.prose-legal h1 {
+  @apply text-3xl md:text-4xl font-black text-white font-display mb-2;
+}
+.prose-legal h2 {
+  @apply text-xl font-bold text-white mt-10 mb-3;
+}
+.prose-legal p,
+.prose-legal li {
+  @apply text-slate-300 leading-relaxed;
+}
+.prose-legal ul {
+  @apply list-disc pl-6 space-y-1.5 my-3;
+}
+.prose-legal p {
+  @apply my-3;
+}
+.prose-legal .meta {
+  @apply text-sm text-slate-500 mb-8;
 }

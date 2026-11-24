@@ -85,7 +85,7 @@ export function ScaleCircle({ rootPc, scaleKey }: { rootPc: number; scaleKey: st
           id="compareScale"
           value={compareKey ?? ''}
           onChange={(e) => setCompareKey(e.target.value || null)}
-          className="bg-slate-700 border border-slate-600 text-white rounded-lg px-2 py-1.5"
+          className="bg-ink-600 border border-ink-500 text-white rounded-lg px-2 py-1.5"
         >
           <option value="">— nenhuma —</option>
           {SCALES.filter((s) => s.key !== scaleKey).map((s) => (

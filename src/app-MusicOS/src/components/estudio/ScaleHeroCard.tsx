@@ -21,10 +21,10 @@ export function ScaleHeroCard({ scale, rootPc }: { scale: BuiltScale; rootPc: nu
   const info = SCALE_INFO[scale.def.key] ?? SCALE_INFO.maior;
 
   return (
-    <div className="bg-slate-800 rounded-2xl p-6 md:p-10 grid gap-8 lg:grid-cols-[1fr_auto] items-center">
+    <div className="card p-6 md:p-10 grid gap-8 lg:grid-cols-[1fr_auto] items-center">
       <div>
         <div className="flex items-baseline gap-4 mb-6">
-          <span className="text-7xl md:text-8xl font-black text-white leading-none" style={{ fontFamily: 'Archivo Black, sans-serif' }}>
+          <span className="text-7xl md:text-8xl font-black text-white leading-none font-display">
             {scale.root}
           </span>
           <span className="text-3xl md:text-4xl text-slate-200">{info.label}</span>

@@ -163,7 +163,7 @@ export function CircleOfFifths({
                     selected!.major ? 'maior' : 'menor_natural'
                   )
                 }
-                className="mt-3 px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold"
+                className="mt-3 px-4 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-400 text-white text-sm font-semibold"
               >
                 Usar esta tonalidade na página
               </button>

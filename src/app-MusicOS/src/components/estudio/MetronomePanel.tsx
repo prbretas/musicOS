@@ -78,9 +78,9 @@ export function MetronomePanel() {
           value={bpm}
           onChange={(e) => setBpm(Number(e.target.value))}
           onBlur={(e) => changeBpm(Number(e.target.value))}
-          className="w-20 bg-slate-800 border border-slate-600 rounded-lg px-2 py-2 text-xl font-bold text-center text-white"
+          className="w-20 bg-ink-700 border border-ink-500 rounded-lg px-2 py-2 text-xl font-bold text-center text-white"
         />
-        <span className="text-xl font-bold text-blue-400">{bpm} BPM</span>
+        <span className="text-xl font-bold text-brand-300">{bpm} BPM</span>
       </div>
 
       <input
@@ -98,7 +98,7 @@ export function MetronomePanel() {
           <span
             key={b}
             className={`w-4 h-4 rounded-full transition-colors ${
-              beat === b ? (b === 1 ? 'bg-rose-500' : 'bg-blue-400') : 'bg-slate-700'
+              beat === b ? (b === 1 ? 'bg-rose-500' : 'bg-brand-400') : 'bg-ink-600'
             }`}
           />
         ))}
@@ -107,7 +107,7 @@ export function MetronomePanel() {
       <div className="flex justify-center">
         <button
           onClick={() => setPlaying((p) => !p)}
-          className={`px-8 py-3 rounded-lg font-semibold text-white ${playing ? 'bg-red-600 hover:bg-red-500' : 'bg-blue-600 hover:bg-blue-500'}`}
+          className={`px-8 py-3 rounded-lg font-semibold text-white ${playing ? 'bg-red-600 hover:bg-red-500' : 'bg-brand-500 hover:bg-brand-400'}`}
         >
           {playing ? '■ Parar' : '▶ Iniciar'}
         </button>
@@ -118,7 +118,7 @@ export function MetronomePanel() {
           <button
             key={p.label}
             onClick={() => changeBpm(p.bpm)}
-            className={`border ${p.tone} rounded-lg px-2 py-2 text-sm text-slate-200 hover:bg-slate-800`}
+            className={`border ${p.tone} rounded-lg px-2 py-2 text-sm text-slate-200 hover:bg-ink-700`}
           >
             {p.label}
           </button>

@@ -1,151 +1,34 @@
 /**
- * Stripe Checkout Integration
+ * Chamadas de cobrança feitas pelo navegador.
+ * O Stripe nunca é carregado no cliente: tudo passa pelas rotas /api/stripe/*.
  */
 
-import { loadStripe } from '@stripe/stripe-js';
+import type { PaidPlanId } from '@/lib/plans';
 
-// ============================================
-// CLIENT-SIDE
-// ============================================
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
-
-export interface CheckoutParams {
-  priceId: string;
-  successUrl: string;
-  cancelUrl: string;
-  customerEmail?: string;
-}
-
-/**
- * Criar sessão de checkout
- */
-export async function createCheckoutSession(params: CheckoutParams) {
-  const response = await fetch('/api/stripe/checkout', {
+async function postJson<T>(url: string, body?: unknown): Promise<T> {
+  const res = await fetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(params),
+    headers: { 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined,
   });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to create checkout session');
-  }
-
-  const { sessionId, url } = await response.json();
-
-  // Redirect to Stripe Checkout
-  if (url) {
-    window.location.href = url;
-  }
-
-  return sessionId;
+  const data = (await res.json().catch(() => ({}))) as T & { error?: string };
+  if (!res.ok) throw new Error(data.error || 'Não foi possível concluir. Tente novamente.');
+  return data;
 }
 
-/**
- * Redirecionar para portal de gerenciamento
- */
-export async function redirectToCustomerPortal() {
-  const response = await fetch('/api/stripe/portal', {
-    method: 'POST',
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to redirect to portal');
-  }
-
-  const { url } = await response.json();
-  window.location.href = url;
+/** Cria a sessão de checkout do plano e leva o usuário ao Stripe. */
+export async function startCheckout(plan: PaidPlanId): Promise<void> {
+  const { url } = await postJson<{ url: string }>('/api/stripe/checkout', { plan });
+  window.location.assign(url);
 }
 
-// Preços configurados
-export const PRICES = {
-  pro_monthly: {
-    id: process.env.NEXT_PUBLIC_STRIPE_PRO_MONTHLY_PRICE_ID || 'price_pro_monthly',
-    name: 'MusicOS Pro',
-    price: 9.90,
-    interval: 'mês',
-  },
-  pro_lifetime: {
-    id: process.env.NEXT_PUBLIC_STRIPE_LIFETIME_PRICE_ID || 'price_lifetime',
-    name: 'MusicOS Pro Lifetime',
-    price: 197.00,
-    interval: 'único',
-  },
-};
-
-export function subscribeToPro() {
-  return createCheckoutSession({
-    priceId: PRICES.pro_monthly.id,
-    successUrl: `${window.location.origin}/dashboard?success=true`,
-    cancelUrl: `${window.location.origin}/pricing?canceled=true`,
-  });
+/** Abre o portal do Stripe para trocar cartão, ver faturas ou cancelar. */
+export async function openCustomerPortal(): Promise<void> {
+  const { url } = await postJson<{ url: string }>('/api/stripe/portal');
+  window.location.assign(url);
 }
 
-export function subscribeToLifetime() {
-  return createCheckoutSession({
-    priceId: PRICES.pro_lifetime.id,
-    successUrl: `${window.location.origin}/dashboard?success=true`,
-    cancelUrl: `${window.location.origin}/pricing?canceled=true`,
-  });
-}
-
-// ============================================
-// SERVER-SIDE (API ROUTES)
-// ============================================
-
-import Stripe from 'stripe';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16',
-});
-
-export async function createCheckoutSessionServer(
-  priceId: string,
-  customerEmail: string,
-  successUrl: string,
-  cancelUrl: string
-) {
-  const session = await stripe.checkout.sessions.create({
-    mode: 'subscription',
-    customer_email: customerEmail,
-    line_items: [
-      {
-        price: priceId,
-        quantity: 1,
-      },
-    ],
-    success_url: successUrl,
-    cancel_url: cancelUrl,
-    metadata: {
-      customer_email: customerEmail,
-    },
-  });
-
-  return session;
-}
-
-export async function createPortalSession(customerId: string, returnUrl: string) {
-  const session = await stripe.billingPortal.sessions.create({
-    customer: customerId,
-    return_url: returnUrl,
-  });
-
-  return session;
-}
-
-export async function getSubscription(sessionId: string) {
-  const session = await stripe.checkout.sessions.retrieve(sessionId);
-  return session;
-}
-
-export function constructWebhookEvent(payload: string | Buffer, signature: string) {
-  return stripe.webhooks.constructEvent(
-    payload,
-    signature,
-    process.env.STRIPE_WEBHOOK_SECRET!
-  );
+/** Caminho que inicia o checkout de um plano (usado como `next` após login/cadastro). */
+export function checkoutPath(plan: PaidPlanId): string {
+  return `/checkout?plan=${plan}`;
 }

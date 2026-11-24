@@ -1,288 +1,334 @@
 'use client';
 
-import { useState } from 'react';
-import { SUBSCRIPTION_TIERS, formatPrice, type SubscriptionTier } from '@/lib/subscription';
-import { InfoButton } from '@/components/ui/InfoButton';
+import { Suspense, useState } from 'react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { PLANS, formatPrice, type PaidPlanId, type PlanId } from '@/lib/plans';
+import { checkoutPath, startCheckout } from '@/lib/stripe/checkout';
+import { useAuth } from '@/components/providers/AuthProvider';
+import { SiteHeader } from '@/components/layout/SiteHeader';
+import { SiteFooter } from '@/components/layout/SiteFooter';
+import { ProBadge } from '@/components/pro/ProBadge';
 
-export default function PricingPage() {
-  const [billingInterval, setBillingInterval] = useState<'monthly' | 'lifetime'>('monthly');
+const COMPARISON: { feature: string; free: boolean | string; pro: boolean | string }[] = [
+  { feature: 'Escalas maior, menor, pentatônicas e blues', free: true, pro: true },
+  { feature: 'Modos gregos, menor harmônica/melódica, exóticas', free: false, pro: true },
+  { feature: 'Tabela de intervalos e notas da escala', free: true, pro: true },
+  { feature: 'Campo harmônico', free: 'Tríades', pro: 'Tríades e tétrades' },
+  { feature: 'Diagramas de acordes com som', free: true, pro: true },
+  { feature: 'Braço da guitarra', free: 'Afinação padrão', pro: 'Todas as afinações' },
+  { feature: 'Ukulele', free: false, pro: true },
+  { feature: 'Desenhos CAGED e 7 posições', free: false, pro: true },
+  { feature: 'Teclado virtual', free: true, pro: true },
+  { feature: 'Ciclo de quintas', free: true, pro: true },
+  { feature: 'Metrônomo', free: true, pro: true },
+  { feature: 'Afinador com microfone', free: false, pro: true },
+  { feature: 'Treino auditivo (intervalos e acordes)', free: false, pro: true },
+  { feature: 'Exportar e imprimir', free: false, pro: true },
+  { feature: 'Sem anúncios', free: false, pro: true },
+];
+
+const FAQ = [
+  {
+    q: 'Preciso de conta para usar o modo grátis?',
+    a: 'Não. O estúdio abre direto, sem cadastro. A conta só é necessária para comprar um plano e manter seu acesso em qualquer dispositivo.',
+  },
+  {
+    q: 'Posso cancelar quando quiser?',
+    a: 'Sim. Nos planos mensal e anual você cancela em "Minha conta" com um clique, sem taxa. O acesso continua até o fim do período já pago.',
+  },
+  {
+    q: 'Como funciona o Vitalício?',
+    a: 'Um único pagamento. Você fica com todos os recursos Pro para sempre, incluindo tudo o que lançarmos no futuro. Sem mensalidade.',
+  },
+  {
+    q: 'Quais formas de pagamento?',
+    a: 'Cartão de crédito e débito, via Stripe. Pix e boleto podem ser habilitados na sua conta Stripe para o plano vitalício.',
+  },
+  {
+    q: 'Tenho garantia?',
+    a: 'Sim: 7 dias. Se não gostar, escreva para suporte@musicos.app e devolvemos o valor integral.',
+  },
+];
+
+function Check({ ok }: { ok: boolean }) {
+  return ok ? (
+    <svg className="w-5 h-5 text-emerald-400 mx-auto" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24" aria-label="Incluído">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+    </svg>
+  ) : (
+    <span className="text-slate-600" aria-label="Não incluído">
+      —
+    </span>
+  );
+}
+
+function PricingInner() {
+  const router = useRouter();
+  const params = useSearchParams();
+  const { user, entitlement } = useAuth();
+  const [interval, setInterval] = useState<'monthly' | 'yearly'>('yearly');
+  const [busy, setBusy] = useState<PaidPlanId | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const canceled = params.get('checkout') === 'canceled';
+
+  const proPlanId: PaidPlanId = interval === 'yearly' ? 'pro_yearly' : 'pro_monthly';
+  const proPlan = PLANS[proPlanId];
+
+  async function choose(plan: PaidPlanId) {
+    setError(null);
+    if (!user) {
+      router.push(`/signup?next=${encodeURIComponent(checkoutPath(plan))}`);
+      return;
+    }
+    try {
+      setBusy(plan);
+      await startCheckout(plan);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Não foi possível iniciar o pagamento.');
+      setBusy(null);
+    }
+  }
+
+  const currentPlan: PlanId | null = entitlement.isLifetime ? 'lifetime' : entitlement.isPro ? entitlement.planId : user ? 'free' : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 py-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            Escolha seu plano
+    <div className="min-h-screen flex flex-col">
+      <SiteHeader />
+      <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-12">
+        <div className="text-center max-w-2xl mx-auto mb-10">
+          <span className="badge-pro text-xs px-2 py-1">Planos</span>
+          <h1 className="text-4xl md:text-5xl font-black text-white font-display mt-4">
+            Estude de graça. <span className="text-pro-300">Evolua com o Pro.</span>
           </h1>
-          <p className="text-xl text-slate-400 max-w-2xl mx-auto">
-            Desbloqueie todo o potencial do MusicOS com recursos profissionais para acelerar seu aprendizado musical
+          <p className="text-lg text-slate-400 mt-4">
+            O essencial é grátis e sem cadastro. O Pro desbloqueia todas as escalas, tétrades, CAGED, afinador e treino auditivo.
           </p>
         </div>
 
-        {/* Billing toggle */}
-        <div className="flex justify-center mb-12">
-          <div className="bg-white/10 rounded-2xl p-1 inline-flex">
+        {canceled && (
+          <div className="max-w-xl mx-auto mb-8 rounded-xl border border-amber-500/40 bg-amber-500/10 px-5 py-3 text-sm text-amber-200 text-center">
+            Pagamento cancelado. Nada foi cobrado — quando quiser, é só escolher um plano.
+          </div>
+        )}
+        {error && (
+          <div className="max-w-xl mx-auto mb-8 rounded-xl border border-red-500/40 bg-red-500/10 px-5 py-3 text-sm text-red-200 text-center">{error}</div>
+        )}
+
+        {/* Toggle mensal/anual */}
+        <div className="flex justify-center mb-8">
+          <div className="inline-flex rounded-xl bg-ink-700 border border-ink-500 p-1 text-sm">
             <button
-              onClick={() => setBillingInterval('monthly')}
-              className={`px-6 py-3 rounded-xl font-medium transition-all ${
-                billingInterval === 'monthly'
-                  ? 'bg-purple-600 text-white'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+              onClick={() => setInterval('monthly')}
+              className={`px-5 py-2 rounded-lg font-semibold transition-colors ${interval === 'monthly' ? 'bg-brand-500 text-white' : 'text-slate-400 hover:text-white'}`}
             >
               Mensal
             </button>
             <button
-              onClick={() => setBillingInterval('lifetime')}
-              className={`px-6 py-3 rounded-xl font-medium transition-all ${
-                billingInterval === 'lifetime'
-                  ? 'bg-purple-600 text-white'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+              onClick={() => setInterval('yearly')}
+              className={`px-5 py-2 rounded-lg font-semibold transition-colors ${interval === 'yearly' ? 'bg-brand-500 text-white' : 'text-slate-400 hover:text-white'}`}
             >
-              Vitalício
+              Anual <span className="text-pro-300 text-xs ml-1">-25%</span>
             </button>
           </div>
         </div>
 
-        {/* Pricing cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Free */}
-          <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/10">
-            <h3 className="text-2xl font-bold text-white mb-2">
-              {SUBSCRIPTION_TIERS.free.name}
-            </h3>
-            <div className="mb-6">
-              <span className="text-4xl font-bold text-white">Grátis</span>
-            </div>
-            <p className="text-slate-400 mb-6">
-              Para quem está começando e quer explorar o básico
-            </p>
-
-            <ul className="space-y-4 mb-8">
-              {SUBSCRIPTION_TIERS.free.features.map((feature) => (
-                <li key={feature} className="flex items-center gap-3 text-slate-300">
-                  <svg className="w-5 h-5 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  {feature}
-                </li>
-              ))}
-            </ul>
-
-            <button className="w-full py-4 px-6 rounded-xl border-2 border-slate-500 text-white font-semibold hover:bg-slate-800 transition-all">
-              Começar Grátis
-            </button>
-          </div>
+        {/* Cards */}
+        <div className="grid gap-6 md:grid-cols-3 items-stretch">
+          {/* Grátis */}
+          <PlanCard
+            name={PLANS.free.name}
+            price="R$ 0"
+            period={PLANS.free.period}
+            tagline={PLANS.free.tagline}
+            features={PLANS.free.features}
+            current={currentPlan === 'free'}
+            cta={
+              currentPlan === 'free' ? (
+                <span className="btn-secondary w-full opacity-70 cursor-default">Seu plano atual</span>
+              ) : (
+                <Link href="/" className="btn-secondary w-full">
+                  Usar grátis
+                </Link>
+              )
+            }
+          />
 
           {/* Pro */}
-          <div className="relative bg-gradient-to-b from-purple-600/20 to-pink-600/20 backdrop-blur-xl rounded-3xl p-8 border-2 border-purple-500 transform md:scale-105">
-            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-white text-sm font-semibold">
-              Mais Popular
-            </div>
-            <h3 className="text-2xl font-bold text-white mb-2">
-              {SUBSCRIPTION_TIERS.pro.name}
-            </h3>
-            <div className="mb-6">
-              <span className="text-4xl font-bold text-white">
-                {billingInterval === 'monthly'
-                  ? formatPrice(SUBSCRIPTION_TIERS.pro.price, 'mês')
-                  : formatPrice(97)}
-              </span>
-              {billingInterval === 'monthly' && (
-                <span className="text-slate-400 ml-2">
-                  /mês
-                </span>
-              )}
-            </div>
-            <p className="text-slate-400 mb-6">
-              Para músicos comprometidos com o progresso
-            </p>
+          <PlanCard
+            highlight
+            badge={interval === 'yearly' ? 'Mais popular' : undefined}
+            name="Pro"
+            price={formatPrice(proPlan.price)}
+            period={proPlan.period}
+            sub={interval === 'yearly' ? 'Equivale a R$ 7,42/mês' : 'Cancele quando quiser'}
+            tagline={PLANS.pro_monthly.tagline}
+            features={PLANS.pro_monthly.features}
+            current={currentPlan === proPlanId}
+            cta={
+              currentPlan === proPlanId ? (
+                <Link href="/account" className="btn-secondary w-full">
+                  Seu plano atual · Gerenciar
+                </Link>
+              ) : entitlement.isPro ? (
+                <Link href="/account" className="btn-secondary w-full">
+                  Você já é Pro
+                </Link>
+              ) : (
+                <button onClick={() => choose(proPlanId)} disabled={busy !== null} className="btn-pro w-full py-3">
+                  {busy === proPlanId ? 'Abrindo pagamento…' : 'Assinar o Pro'}
+                </button>
+              )
+            }
+          />
 
-            <ul className="space-y-4 mb-8">
-              {SUBSCRIPTION_TIERS.pro.features.map((feature) => (
-                <li key={feature} className="flex items-center gap-3 text-slate-300">
-                  <svg className="w-5 h-5 text-purple-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  {feature}
-                </li>
-              ))}
-            </ul>
-
-            <button className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold hover:from-purple-500 hover:to-pink-500 transition-all shadow-lg shadow-purple-500/25">
-              Assinar Agora
-            </button>
-          </div>
-
-          {/* Lifetime */}
-          <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/10">
-            <h3 className="text-2xl font-bold text-white mb-2">
-              {SUBSCRIPTION_TIERS.lifetime.name}
-            </h3>
-            <div className="mb-6">
-              <span className="text-4xl font-bold text-white">
-                {formatPrice(SUBSCRIPTION_TIERS.lifetime.price)}
-              </span>
-              <span className="text-slate-400 ml-2">
-                único
-              </span>
-            </div>
-            <p className="text-slate-400 mb-6">
-              Para quem quer acesso vitalício com um único pagamento
-            </p>
-
-            <ul className="space-y-4 mb-8">
-              {SUBSCRIPTION_TIERS.lifetime.features.map((feature) => (
-                <li key={feature} className="flex items-center gap-3 text-slate-300">
-                  <svg className="w-5 h-5 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  {feature}
-                </li>
-              ))}
-            </ul>
-
-            <button className="w-full py-4 px-6 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-400 transition-all shadow-lg shadow-amber-500/25">
-              Comprar Vitalício
-            </button>
-          </div>
+          {/* Vitalício */}
+          <PlanCard
+            badge={PLANS.lifetime.badge}
+            name={PLANS.lifetime.name}
+            price={formatPrice(PLANS.lifetime.price)}
+            period={PLANS.lifetime.period}
+            sub="Menos de 2 anos de Pro Mensal"
+            tagline={PLANS.lifetime.tagline}
+            features={PLANS.lifetime.features}
+            current={currentPlan === 'lifetime'}
+            cta={
+              currentPlan === 'lifetime' ? (
+                <span className="btn-secondary w-full opacity-70 cursor-default">Seu plano atual</span>
+              ) : (
+                <button onClick={() => choose('lifetime')} disabled={busy !== null} className="btn-primary w-full py-3">
+                  {busy === 'lifetime' ? 'Abrindo pagamento…' : 'Comprar vitalício'}
+                </button>
+              )
+            }
+          />
         </div>
 
-        {/* Comparison section */}
-        <div className="mt-20">
-          <h2 className="text-3xl font-bold text-white text-center mb-12">
-            Compare os recursos
-          </h2>
+        <p className="text-center text-xs text-slate-500 mt-6">
+          Pagamento seguro via Stripe · Garantia de 7 dias · Preços em reais, impostos inclusos
+        </p>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-white/10">
-                  <th className="py-4 px-6 text-slate-400 font-medium">Recurso</th>
-                  <th className="py-4 px-6 text-center text-white font-medium">Grátis</th>
-                  <th className="py-4 px-6 text-center text-white font-medium">Pro</th>
-                  <th className="py-4 px-6 text-center text-white font-medium">Lifetime</th>
+        {/* Comparativo */}
+        <section className="mt-20">
+          <h2 className="text-2xl md:text-3xl font-black text-white font-display text-center mb-8">Compare os recursos</h2>
+          <div className="card overflow-hidden">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-ink-700/60">
+                <tr>
+                  <th className="py-3 px-5 font-semibold text-slate-400">Recurso</th>
+                  <th className="py-3 px-5 font-semibold text-white text-center w-40">Grátis</th>
+                  <th className="py-3 px-5 font-semibold text-center w-48">
+                    <span className="inline-flex items-center gap-1.5 text-white">
+                      Pro <ProBadge />
+                    </span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {[
-                  { feature: 'Escalas e modos', free: true, pro: true, lifetime: true },
-                  { feature: 'Diagramas de acordes', free: 'Básico', pro: 'Completo', lifetime: 'Completo' },
-                  { feature: 'Círculo das quintas', free: true, pro: true, lifetime: true },
-                  { feature: 'Metrônomo', free: true, pro: true, lifetime: true },
-                  { feature: 'Ukulele afinações', free: '1', pro: 'Todas', lifetime: 'Todas' },
-                  { feature: 'Guitarra afinações', free: false, pro: true, lifetime: true },
-                  { feature: 'Afinações customizadas', free: '1', pro: 'Ilimitadas', lifetime: 'Ilimitadas' },
-                  { feature: 'Exportar cifras', free: false, pro: true, lifetime: true },
-                  { feature: 'Sem anúncios', free: false, pro: true, lifetime: true },
-                  { feature: 'Suporte prioritário', free: false, pro: false, lifetime: true },
-                  { feature: 'Atualizações futuras', free: false, pro: false, lifetime: true },
-                ].map((row, idx) => (
-                  <tr key={row.feature} className="border-b border-white/5 hover:bg-white/5">
-                    <td className="py-4 px-6 text-slate-300">{row.feature}</td>
-                    <td className="py-4 px-6 text-center">
-                      {typeof row.free === 'boolean' ? (
-                        row.free ? (
-                          <svg className="w-5 h-5 text-green-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        ) : (
-                          <svg className="w-5 h-5 text-slate-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        )
-                      ) : (
-                        <span className="text-slate-400">{row.free}</span>
-                      )}
+                {COMPARISON.map((row) => (
+                  <tr key={row.feature} className="border-t border-ink-600 hover:bg-ink-700/40">
+                    <td className="py-3 px-5 text-slate-200">{row.feature}</td>
+                    <td className="py-3 px-5 text-center text-slate-400">
+                      {typeof row.free === 'boolean' ? <Check ok={row.free} /> : row.free}
                     </td>
-                    <td className="py-4 px-6 text-center">
-                      {typeof row.pro === 'boolean' ? (
-                        row.pro ? (
-                          <svg className="w-5 h-5 text-green-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        ) : (
-                          <svg className="w-5 h-5 text-slate-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        )
-                      ) : (
-                        <span className="text-purple-400">{row.pro}</span>
-                      )}
-                    </td>
-                    <td className="py-4 px-6 text-center">
-                      {typeof row.lifetime === 'boolean' ? (
-                        row.lifetime ? (
-                          <svg className="w-5 h-5 text-green-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        ) : (
-                          <svg className="w-5 h-5 text-slate-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        )
-                      ) : (
-                        <span className="text-amber-400">{row.lifetime}</span>
-                      )}
+                    <td className="py-3 px-5 text-center text-pro-200">
+                      {typeof row.pro === 'boolean' ? <Check ok={row.pro} /> : row.pro}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </div>
+          <p className="text-xs text-slate-500 mt-3 text-center">O plano Vitalício inclui tudo do Pro, para sempre.</p>
+        </section>
 
         {/* FAQ */}
-        <div className="mt-20 max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold text-white text-center mb-12">
-            Perguntas Frequentes
-          </h2>
-
-          <div className="space-y-4">
-            {[
-              {
-                q: 'Posso cancelar a qualquer momento?',
-                a: 'Sim! Você pode cancelar sua assinatura mensal quando quiser. Não há taxas de cancelamento.',
-              },
-              {
-                q: 'O que é o plano Lifetime?',
-                a: 'O plano Lifetime é um pagamento único que dá acesso vitalício a todas as funcionalidades Pro, incluindo atualizações futuras.',
-              },
-              {
-                q: 'Como funciona o suporte?',
-                a: 'Usuários Pro têm acesso ao suporte por email em até 24h. Usuários Lifetime têm prioridade no suporte.',
-              },
-              {
-                q: 'Posso trocar de plano depois?',
-                a: 'Sim, você pode fazer upgrade ou downgrade do seu plano a qualquer momento. As alterações entram na próxima ciclo de cobrança.',
-              },
-            ].map((faq, idx) => (
-              <div key={idx} className="bg-white/5 rounded-xl p-6 border border-white/10">
-                <h3 className="text-lg font-semibold text-white mb-2">{faq.q}</h3>
-                <p className="text-slate-400">{faq.a}</p>
-              </div>
+        <section className="mt-20 max-w-3xl mx-auto">
+          <h2 className="text-2xl md:text-3xl font-black text-white font-display text-center mb-8">Perguntas frequentes</h2>
+          <div className="space-y-3">
+            {FAQ.map((item) => (
+              <details key={item.q} className="card px-5 py-4 group">
+                <summary className="cursor-pointer font-semibold text-white list-none flex items-center justify-between gap-4">
+                  {item.q}
+                  <span className="text-slate-500 group-open:rotate-45 transition-transform">+</span>
+                </summary>
+                <p className="text-slate-400 mt-3 text-sm leading-relaxed">{item.a}</p>
+              </details>
             ))}
           </div>
-        </div>
-
-        {/* CTA */}
-        <div className="mt-20 text-center">
-          <p className="text-slate-400 mb-4">
-            Ainda tem dúvidas? Fale com nossa equipe
+          <p className="text-center text-sm text-slate-500 mt-8">
+            Ainda com dúvida?{' '}
+            <a href="mailto:suporte@musicos.app" className="link">
+              suporte@musicos.app
+            </a>
           </p>
-          <a
-            href="mailto:suporte@musicos.app"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-            suporte@musicos.app
-          </a>
-        </div>
-      </div>
+        </section>
+      </main>
+      <SiteFooter />
     </div>
+  );
+}
+
+function PlanCard({
+  name,
+  price,
+  period,
+  sub,
+  tagline,
+  features,
+  cta,
+  highlight,
+  badge,
+  current,
+}: {
+  name: string;
+  price: string;
+  period: string;
+  sub?: string;
+  tagline: string;
+  features: string[];
+  cta: React.ReactNode;
+  highlight?: boolean;
+  badge?: string;
+  current?: boolean;
+}) {
+  return (
+    <div
+      className={`relative card p-7 flex flex-col ${highlight ? 'border-pro-400/70 shadow-glow-pro md:-my-3' : ''} ${
+        current ? 'ring-2 ring-brand-400/60' : ''
+      }`}
+    >
+      {badge && (
+        <span className="absolute -top-3 left-6 rounded-md bg-pro-400 text-ink-900 text-[11px] font-black uppercase tracking-wider px-2.5 py-1">
+          {badge}
+        </span>
+      )}
+      <h3 className="text-xl font-bold text-white mt-1">{name}</h3>
+      <p className="mt-3">
+        <span className="text-4xl font-black text-white font-display">{price}</span>
+        <span className="text-slate-400 ml-1.5">{period}</span>
+      </p>
+      {sub && <p className="text-xs text-pro-300 mt-1">{sub}</p>}
+      <p className="text-slate-400 text-sm mt-3">{tagline}</p>
+      <ul className="mt-6 space-y-2.5 text-sm flex-1">
+        {features.map((f) => (
+          <li key={f} className="flex items-start gap-2.5 text-slate-300">
+            <svg className="w-4 h-4 mt-0.5 shrink-0 text-emerald-400" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            {f}
+          </li>
+        ))}
+      </ul>
+      <div className="mt-7">{cta}</div>
+    </div>
+  );
+}
+
+export default function PricingPage() {
+  return (
+    <Suspense fallback={null}>
+      <PricingInner />
+    </Suspense>
   );
 }

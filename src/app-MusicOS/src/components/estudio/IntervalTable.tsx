@@ -13,7 +13,7 @@ export function IntervalTable({ scale }: { scale: BuiltScale }) {
 
   const cell = (i: number) => {
     const active = inScale.has(i % 12);
-    return active ? 'bg-[#24485a] text-white font-bold' : 'bg-slate-800 text-slate-400';
+    return active ? 'bg-[#24485a] text-white font-bold' : 'bg-ink-700 text-slate-400';
   };
 
   const rows: { label: string; render: (i: number) => string; extra?: (i: number) => string }[] = [
@@ -32,7 +32,7 @@ export function IntervalTable({ scale }: { scale: BuiltScale }) {
   ];
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-700">
+    <div className="overflow-x-auto rounded-lg border border-ink-600">
       <table className="w-full min-w-[720px] border-collapse text-center text-sm md:text-base">
         <tbody>
           {rows.map((row) => (
@@ -41,7 +41,7 @@ export function IntervalTable({ scale }: { scale: BuiltScale }) {
                 {row.label}
               </th>
               {cols.map((i) => (
-                <td key={i} className={`border border-slate-700 px-2 py-2.5 ${cell(i)} ${row.extra?.(i) ?? ''}`}>
+                <td key={i} className={`border border-ink-600 px-2 py-2.5 ${cell(i)} ${row.extra?.(i) ?? ''}`}>
                   {row.render(i)}
                 </td>
               ))}

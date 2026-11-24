@@ -1,9 +1,7 @@
 import { test, expect } from './support/fixtures';
 
 /**
- * Smoke test do Estudio provisorio em `/`.
- * Quando a parte A da spec estrutura-do-app levar o conteudo para /app/*,
- * este arquivo e substituido por abas.spec.ts (tarefa Q6).
+ * Testes do Estúdio em `/` (modo grátis, sem login).
  */
 
 test('a pagina carrega com o cartao da escala e sem erros', async ({ page }) => {
@@ -45,4 +43,27 @@ test('no braço, o G da corda 1 fica na casa 3 (regressão da casa vazia)', asyn
 
   expect(pos.F).toBe(pos.casa1);
   expect(pos.G).toBe(pos.casa3);
+});
+
+test('modo grátis: escala Pro abre o modal de upgrade sem trocar a escala', async ({ page }) => {
+  await page.goto('/');
+  await page.selectOption('#tipoEscala', 'dorico');
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(page.getByText('Todas as escalas e modos')).toBeVisible();
+  await expect(page.getByRole('button', { name: /Criar conta e assinar/ }).first()).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('heading', { name: /Tabela de Intervalos - C Maior/ })).toBeVisible();
+});
+
+test('modo grátis: cabeçalho mostra Entrar e o afinador pede upgrade', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('link', { name: 'Entrar' })).toBeVisible();
+  await page.getByRole('button', { name: /Afinador/ }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(page.getByText('Afinador cromático')).toBeVisible();
+});
+
+test('rota protegida redireciona para o login', async ({ page }) => {
+  await page.goto('/account');
+  await expect(page).toHaveURL(/\/login\?next=%2Faccount/);
 });

@@ -89,11 +89,11 @@ function ChordCard({ chord }: { chord: HarmonicChord }) {
   };
 
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-xl p-3 flex flex-col items-center min-w-[118px]">
+    <div className="bg-ink-700 border border-ink-600 rounded-xl p-3 flex flex-col items-center min-w-[118px]">
       <span className="text-xs text-slate-400">{chord.grau}</span>
       <span className="font-bold text-white mb-1">{chord.name}</span>
       {shape ? (
-        <button onClick={play} title="Tocar acorde" className="rounded hover:bg-slate-700 p-1">
+        <button onClick={play} title="Tocar acorde" className="rounded hover:bg-ink-600 p-1">
           <MiniChordDiagram shape={shape} />
         </button>
       ) : (

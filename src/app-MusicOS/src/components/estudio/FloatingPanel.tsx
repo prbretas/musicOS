@@ -32,13 +32,13 @@ export function FloatingPanel({
       tabIndex={-1}
       role="dialog"
       aria-label={title}
-      className={`fixed z-50 right-3 left-3 bottom-3 sm:left-auto sm:bottom-auto sm:top-24 sm:right-6 ${
+      className={`fixed z-50 right-3 left-3 bottom-3 sm:left-auto sm:bottom-auto sm:top-36 sm:right-6 ${
         wide ? 'sm:w-[760px]' : 'sm:w-[360px]'
-      } max-h-[75vh] flex flex-col bg-slate-900 border border-slate-600 rounded-xl shadow-2xl outline-none`}
+      } max-h-[75vh] flex flex-col card shadow-2xl outline-none`}
     >
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-ink-600">
         <h2 className="font-bold text-slate-100">{title}</h2>
-        <button onClick={onClose} aria-label="Fechar" className="w-8 h-8 rounded-lg bg-blue-600 hover:bg-blue-500 text-white">
+        <button onClick={onClose} aria-label="Fechar" className="w-8 h-8 rounded-lg bg-brand-500 hover:bg-brand-400 text-white">
           ✕
         </button>
       </div>

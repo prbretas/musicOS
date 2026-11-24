@@ -1,108 +1,96 @@
-# 🎵 MusicOS - Plataforma Completa de Educação Musical
+# 🎵 MusicOS — Estúdio de teoria musical para quem toca
 
-> Sistema completo de teoria musical com 6 módulos integrados, instrumentos virtuais, síntese de áudio e interface moderna.
+> Escalas, campo harmônico, braço da guitarra e do ukulele, CAGED, ciclo de quintas, metrônomo, afinador e treino auditivo — num só lugar. **Grátis para começar, Pro para ir além.**
 
-## 🚀 Status: ✅ 100% COMPLETO E PRONTO PARA USAR!
+## Modelo de negócio
 
-## 📋 Módulos Implementados (100% Completo)
+| Plano | Preço | O que libera |
+| --- | --- | --- |
+| **Grátis** (sem cadastro) | R$ 0 | Escalas maior/menor/pentatônicas/blues, intervalos, campo harmônico com tríades, braço na afinação padrão, teclado, ciclo de quintas, metrônomo |
+| **Pro Mensal** | R$ 9,90/mês | Todas as escalas e modos, tétrades, CAGED, ukulele e afinações alternativas, afinador com microfone, treino auditivo, exportar/imprimir |
+| **Pro Anual** | R$ 89/ano | Tudo do Pro, 25% mais barato |
+| **Vitalício** | R$ 197 único | Tudo do Pro, para sempre, com atualizações futuras |
 
-### ✅ **CORE-001: Music Theory Engine**
-- Notas, intervalos, escalas, acordes
-- 12 tonalidades, modos gregos, progressões
-- Conversão frequência-nota (A4 = 440Hz)
+Fluxo: o estúdio abre sem login → recursos Pro aparecem com o selo **PRO** → ao clicar, abre o modal de upgrade → o usuário cria a conta (e-mail ou Google) → paga no Stripe → o webhook libera o acesso na hora.
 
-### ✅ **CORE-002: InstrumentRegistry**
-- Piano (88/61 teclas), Guitarra, Violão, Ukulele, Baixo, Sintetizador
-- Presets, afinações, migração entre instrumentos
+Preços e textos ficam em um só lugar: `src/app-MusicOS/src/lib/plans.ts`. Quais recursos são Pro: `src/lib/features.ts`.
 
-### ✅ **CORE-003: AudioEngine**
-- Web Audio API com polyphony (32 vozes)
-- Envelopes ADSR, waveforms, efeitos (reverb, delay)
-- Monitoramento de performance (CPU, memória)
+## Stack
 
-### ✅ **CMP-004: ScaleDisplay**
-- Visualização interativa de escalas
-- Teclado virtual e braço de instrumento
-- Comparação lado a lado
+- **Next.js 14** (App Router) + TypeScript + Tailwind
+- **Supabase** — autenticação (e-mail/senha e Google) e banco (`profiles`)
+- **Stripe** — assinaturas (mensal/anual) e pagamento único (vitalício), com webhook e portal do cliente
+- **Web Audio API** — síntese, metrônomo e afinador (sem dependências)
+- Vitest (unitários) + Playwright (E2E)
 
-### ✅ **CMP-005: ChordVisualizer**
-- Diagramas de acordes (guitarra, piano, etc.)
-- Playback com AudioEngine
-- Biblioteca pessoal de acordes
+## Rodando localmente
 
-### ✅ **INT-001: Supabase Integration**
-- Autenticação, perfil, preferências
-- Progresso de lições, sessões de prática
-- Sistema de tier (free/pro/premium)
+Pré-requisitos: Node 18+ e contas no [Supabase](https://supabase.com) e [Stripe](https://stripe.com).
 
----
-
-## 🚀 Como Executar o MusicOS
-
-### 📋 Pré-requisitos
-- Node.js 18+ (https://nodejs.org)
-- Navegador moderno (Chrome, Edge, Firefox)
-
-### Scripts
-
-- **`INICIAR-MUSICOS.bat`**: instala as dependências na primeira vez, sobe o sistema e abre `http://localhost:3000` no navegador.
-- **`RODAR-TESTES.bat`**: roda os testes unitários (Vitest).
-
-O sistema precisa do arquivo `src/app-MusicOS/.env.local` com as chaves do Supabase (modelo em `.env.local.example`). O SQL das tabelas está em `docs/supabase-migration.sql`.
-
----
-
-## 🔧 Estrutura do Projeto
-
-```
-MusicPages-AI-Eng/
-├── 📁 src/app-MusicOS/          # Aplicação Next.js completa
-│   ├── 📁 src/app/              # Páginas do App Router
-│   ├── 📁 src/components/       # Componentes React
-│   ├── 📁 src/lib/              # Módulos do core
-│   │   ├── 📁 core/             # Music Theory Engine
-│   │   ├── 📁 instruments/      # InstrumentRegistry
-│   │   ├── 📁 audio/            # AudioEngine
-│   │   └── 📁 supabase/         # Integração com banco
-│   └── 📄 package.json          # Dependências
-├── INICIAR-MUSICOS.bat          # Sobe o sistema
-├── RODAR-TESTES.bat             # Roda os testes
-├── 📁 docs/                     # Documentação
-└── 📄 README.md                 # Este arquivo
+```bash
+cd src/app-MusicOS
+cp .env.local.example .env.local   # preencha as chaves
+npm install
+npm run dev                        # http://localhost:3000
 ```
 
-## 🎮 Testando Funcionalidades
+No Windows, `INICIAR-MUSICOS.bat` faz o mesmo.
 
-1. **Teoria Musical**: Escalas, acordes, intervalos
-2. **Instrumentos**: Piano, guitarra, violão, ukulele
-3. **Áudio**: Playback de notas e acordes
-4. **Visualização**: Diagramas interativos
-5. **Progresso**: Sistema de aprendizado
+### 1. Supabase
 
-## 📞 Suporte Técnico
+1. Crie um projeto e copie **URL**, **anon key** e **service_role key** para o `.env.local`.
+2. SQL Editor → cole e rode `docs/supabase-migration-v2.sql` (cria `profiles`, trigger de novo usuário, `stripe_events` e as policies).
+3. Authentication → URL Configuration: **Site URL** = sua URL pública; **Redirect URLs** = `https://SEU-DOMINIO/auth/callback` (e `http://localhost:3000/auth/callback` em dev).
+4. Para login com Google: Authentication → Providers → Google (crie as credenciais OAuth no Google Cloud com o redirect `https://SEU-PROJETO.supabase.co/auth/v1/callback`).
 
-### Problemas comuns:
-- **Script não abre**: Execute como Administrador
-- **Node.js não encontrado**: Instale de https://nodejs.org
-- **Porta 3000 em uso**: Feche outros programas
+### 2. Stripe
 
-### Primeira execução:
-1. Execute `INICIAR-MUSICOS.bat`
-2. Aguarde 30-60 segundos (o navegador abre sozinho)
+1. Products → crie o produto **MusicOS Pro** com dois preços recorrentes (mensal R$ 9,90 e anual R$ 89) e o produto **MusicOS Vitalício** com um preço único (R$ 197). Cole os três `price_...` no `.env.local`.
+2. Developers → Webhooks → endpoint `https://SEU-DOMINIO/api/webhooks/stripe` com os eventos:
+   `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, `invoice.payment_failed`. Copie o **signing secret** para `STRIPE_WEBHOOK_SECRET`.
+3. Settings → Billing → Customer portal: ative e permita cancelamento e troca de forma de pagamento.
+4. Em desenvolvimento: `stripe listen --forward-to localhost:3000/api/webhooks/stripe`.
 
-## 🎉 Conclusão
+## Testes
 
-O **MusicOS** é uma plataforma completa de educação musical com:
-- ✅ 6 módulos integrados
-- ✅ Interface React moderna
-- ✅ Sistema de áudio funcional
-- ✅ Banco de dados (opcional)
-- ✅ Scripts de execução simples
+```bash
+npm test               # unitários (Vitest)
+npm run test:e2e       # E2E (Playwright) — precisa do app rodando ou do build
+npm run lint && npx tsc --noEmit
+```
 
-**Execute `INICIAR-MUSICOS.bat` para começar.**
+## Estrutura
 
----
+```
+src/app-MusicOS/src
+├── app/
+│   ├── page.tsx                 # Estúdio (o app; modo grátis sem login)
+│   ├── pricing/                 # Planos
+│   ├── (auth)/login|signup|forgot-password
+│   ├── auth/callback|reset-password
+│   ├── checkout/                # ponte cadastro → Stripe
+│   ├── account/                 # Minha conta (plano, portal, perfil)
+│   ├── (legal)/terms|privacy
+│   └── api/stripe/{checkout,portal}, api/webhooks/stripe
+├── components/
+│   ├── estudio/                 # seções do estúdio (braço, acordes, afinador, exercícios…)
+│   ├── pro/                     # ProBadge, ProGate, UpgradeProvider (modal de upgrade)
+│   ├── providers/AuthProvider   # sessão + perfil + entitlement
+│   └── layout/, auth/, ui/
+├── lib/
+│   ├── plans.ts                 # preços e textos dos planos
+│   ├── features.ts              # o que é grátis e o que é Pro
+│   ├── entitlements.ts          # regra de acesso a partir do perfil
+│   ├── stripe/, supabase/       # servidor, cliente e admin
+│   └── music/                   # engine de teoria musical
+└── middleware.ts                # sessão + rotas protegidas
+```
 
-## 📄 Licença
+## Documentação
 
-MIT - Livre para uso educacional e comercial
+- `docs/supabase-migration-v2.sql` — schema atual
+- `docs/` — produto, roadmap, arquitetura e manual do usuário
+
+## Licença
+
+Projeto privado. Todos os direitos reservados.

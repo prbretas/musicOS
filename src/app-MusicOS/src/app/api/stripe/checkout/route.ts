@@ -1,99 +1,90 @@
-import { createServerClient } from '@supabase/ssr';
+/**
+ * POST /api/stripe/checkout  { plan: 'pro_monthly' | 'pro_yearly' | 'lifetime' }
+ *
+ * Cria (ou reaproveita) o cliente no Stripe e abre uma sessão de checkout.
+ * Assinaturas usam mode=subscription; o vitalício usa mode=payment.
+ * O middleware já garante que só chega aqui quem está logado.
+ */
+
 import { NextResponse, type NextRequest } from 'next/server';
 import type Stripe from 'stripe';
-import { getStripe } from '@/lib/stripe/server';
-
-const PRICE_IDS = {
-  pro_monthly: process.env.STRIPE_PRO_MONTHLY_PRICE_ID || 'price_pro_monthly',
-  pro_lifetime: process.env.STRIPE_PRO_LIFETIME_PRICE_ID || 'price_pro_lifetime',
-  lifetime: process.env.STRIPE_LIFETIME_PRICE_ID || 'price_lifetime',
-};
+import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { appUrl, getStripe, priceIdFor } from '@/lib/stripe/server';
+import { isPaidPlan, PLANS } from '@/lib/plans';
+import { entitlementFromProfile, type Profile } from '@/lib/entitlements';
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return request.cookies.getAll();
-          },
-          setAll() {},
-        },
-      }
-    );
-
-    // Get authenticated user
+    const supabase = await createClient();
     const {
       data: { user },
-      error: authError,
     } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Faça login para continuar.' }, { status: 401 });
+    }
 
-    if (authError || !user) {
+    const body = (await request.json().catch(() => ({}))) as { plan?: string };
+    const plan = body.plan;
+    if (!plan || !isPaidPlan(plan)) {
+      return NextResponse.json({ error: 'Plano inválido.' }, { status: 400 });
+    }
+
+    const admin = createAdminClient();
+    const { data: profileRow } = await admin.from('profiles').select('*').eq('id', user.id).maybeSingle();
+    const profile = (profileRow as Profile | null) ?? null;
+    const entitlement = entitlementFromProfile(profile);
+
+    if (entitlement.isLifetime) {
+      return NextResponse.json({ error: 'Você já tem acesso vitalício.' }, { status: 409 });
+    }
+    if (entitlement.isPro && plan !== 'lifetime' && entitlement.status !== 'canceled') {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: 'Você já é Pro. Para trocar de plano, use "Gerenciar assinatura" na sua conta.' },
+        { status: 409 }
       );
     }
 
-    const { priceId, interval } = await request.json();
+    const stripe = getStripe();
 
-    // Get or create Stripe customer
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('stripe_customer_id')
-      .eq('id', user.id)
-      .single();
-
-    let customerId = profile?.stripe_customer_id;
-
+    // Cliente no Stripe: reaproveita o existente ou cria e guarda o id no perfil
+    let customerId = profile?.stripe_customer_id ?? null;
     if (!customerId) {
-      // Create Stripe customer
-      const customer = await getStripe().customers.create({
-        email: user.email!,
-        name: user.user_metadata?.name || user.email!,
-        metadata: {
-          userId: user.id,
-        },
+      const customer = await stripe.customers.create({
+        email: user.email ?? undefined,
+        name: profile?.name ?? user.user_metadata?.name ?? undefined,
+        metadata: { userId: user.id },
       });
       customerId = customer.id;
-
-      // Update profile with Stripe customer ID
-      await supabase
-        .from('profiles')
-        .update({ stripe_customer_id: customerId })
-        .eq('id', user.id);
+      await admin.from('profiles').update({ stripe_customer_id: customerId }).eq('id', user.id);
     }
 
-    // Create checkout session
-    const checkoutParams: Stripe.Checkout.SessionCreateParams = {
+    const planInfo = PLANS[plan];
+    const base = appUrl();
+
+    const params: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price: priceId || PRICE_IDS.pro_monthly,
-          quantity: 1,
-        },
-      ],
-      mode: interval === 'lifetime' ? 'payment' : 'subscription',
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?success=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing?canceled=true`,
-      metadata: {
-        userId: user.id,
-        interval: interval || 'monthly',
-      },
+      mode: planInfo.recurring ? 'subscription' : 'payment',
+      line_items: [{ price: priceIdFor(plan), quantity: 1 }],
+      success_url: `${base}/account?checkout=success&plan=${plan}`,
+      cancel_url: `${base}/pricing?checkout=canceled`,
       allow_promotion_codes: true,
+      locale: 'pt-BR',
+      client_reference_id: user.id,
+      metadata: { userId: user.id, plan },
+      ...(planInfo.recurring
+        ? { subscription_data: { metadata: { userId: user.id, plan } } }
+        : { payment_intent_data: { metadata: { userId: user.id, plan } }, invoice_creation: { enabled: true } }),
     };
 
-    const session = await getStripe().checkout.sessions.create(checkoutParams);
-
-    return NextResponse.json({ sessionId: session.id, url: session.url });
+    const session = await stripe.checkout.sessions.create(params);
+    if (!session.url) {
+      return NextResponse.json({ error: 'O Stripe não devolveu a URL de pagamento.' }, { status: 502 });
+    }
+    return NextResponse.json({ url: session.url, sessionId: session.id });
   } catch (error) {
-    console.error('Checkout error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error('[stripe/checkout]', error);
+    const message = error instanceof Error ? error.message : 'Erro interno';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

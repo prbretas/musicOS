@@ -15,9 +15,9 @@ export function Section({
   children: ReactNode;
 }) {
   return (
-    <section id={id} className="scroll-mt-28">
-      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-700 pb-2 mb-4">
-        <h2 className="text-xl md:text-2xl font-bold text-slate-100">
+    <section id={id} className="scroll-mt-36">
+      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-ink-600 pb-2 mb-4">
+        <h2 className="text-xl md:text-2xl font-bold text-slate-100 font-display">
           <span className="mr-2">{icon}</span>
           {title}
         </h2>

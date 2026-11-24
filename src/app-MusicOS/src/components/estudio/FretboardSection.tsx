@@ -1,9 +1,11 @@
 'use client';
 
 /**
- * Braco do instrumento com a escala colorida, desenhos CAGED (+ F e B),
- * filtro de pentatonica e destaque do acorde da tonica.
- * A tonica e a escala vem do seletor do topo da pagina.
+ * Braço do instrumento com a escala colorida, desenhos CAGED (+ F e B),
+ * filtro de pentatônica, destaque do acorde da tônica e afinações.
+ * A tônica e a escala vêm do seletor do topo da página.
+ *
+ * Pro: desenhos CAGED e afinações alternativas.
  */
 
 import { useState } from 'react';
@@ -21,41 +23,64 @@ import {
   type CagedShape,
 } from '@/lib/music/caged';
 import { noteNameIn, pc, type BuiltScale } from '@/lib/music/escalas';
+import { TUNINGS, getTuning, type InstrumentType } from '@/lib/music/tunings';
+import { useProFeature } from '@/components/pro/ProGate';
+import { ProBadge } from '@/components/pro/ProBadge';
+
+export type { InstrumentType } from '@/lib/music/tunings';
 
 const MAX_FRET = 15;
-export type InstrumentType = 'guitar' | 'ukulele';
 
 export function FretboardSection({ scale, instrument }: { scale: BuiltScale; instrument: InstrumentType }) {
   const [caged, setCaged] = useState<CagedShape | null>(null);
   const [intervals, setIntervals] = useState(false);
   const [penta, setPenta] = useState(false);
   const [chord, setChord] = useState(false);
+  const [tuningId, setTuningId] = useState('standard');
+
+  const cagedPro = useProFeature('caged');
+  const tuningsPro = useProFeature('alt-tunings');
+
+  const tuning = getTuning(instrument, tuningId);
+  const isStandard = Boolean(tuning.standard);
 
   const root = scale.sharpNotes[0] as TheoryNote;
   const notes = scale.sharpNotes as TheoryNote[];
   const scaleKey = scale.def.key;
 
-  const cagedEnabled = instrument === 'guitar' && hasCagedShapes(scaleKey);
+  const cagedEnabled = instrument === 'guitar' && isStandard && hasCagedShapes(scaleKey);
   const cagedWindows = getCagedWindows(root, scaleKey, MAX_FRET);
   const cagedKey = getCagedKey(root, scaleKey);
   const pentaNotes = getPentatonicNotes(root, notes);
   const triad = getTonicTriad(root, notes);
   const pentaActive = penta && pentaNotes !== null;
   const chordActive = chord && triad !== null;
-  const shownWindows = cagedEnabled && caged ? cagedWindows[caged] : undefined;
+  const shownWindows = cagedEnabled && cagedPro.allowed && caged ? cagedWindows[caged] : undefined;
 
   const btn = (active: boolean) =>
-    `px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-40 ${
-      active ? 'bg-purple-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+    `px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-40 ${
+      active ? 'bg-brand-500 text-white' : 'bg-ink-600 text-slate-300 hover:bg-ink-500'
     }`;
 
   const keyName = noteNameIn(scale, pc(cagedKey));
   const minorForms = isMinorCaged(scaleKey);
   const formName = (shape: CagedShape) => (minorForms ? `${shape}m` : shape);
 
+  function pickShape(shape: CagedShape | null) {
+    if (shape !== null && !cagedPro.gate()) return;
+    setCaged(shape);
+  }
+
+  function pickTuning(id: string) {
+    const t = getTuning(instrument, id);
+    if (!t.standard && !tuningsPro.gate()) return;
+    setTuningId(id);
+    if (!t.standard) setCaged(null);
+  }
+
   return (
-    <div className="bg-slate-800 rounded-xl p-6 space-y-6">
-      <div className="flex flex-wrap items-center gap-6">
+    <div className="card p-6 space-y-6">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
         <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
           <input type="checkbox" checked={intervals} onChange={(e) => setIntervals(e.target.checked)} />
           Mostrar intervalos (R, 3, 5...)
@@ -72,29 +97,53 @@ export function FretboardSection({ scale, instrument }: { scale: BuiltScale; ins
           Destacar acorde
           {triad ? ` ${scale.root}${triad.name.slice(triad.notes[0].length)} (${triad.notes.map((n) => noteNameIn(scale, pc(n))).join(' ')})` : ''}
         </label>
+
+        <label className="flex items-center gap-2 text-sm text-slate-300 ml-auto">
+          <span className="inline-flex items-center gap-1.5">
+            Afinação
+            {!tuningsPro.allowed && <ProBadge />}
+          </span>
+          <select value={tuning.id} onChange={(e) => pickTuning(e.target.value)} aria-label="Afinação">
+            {TUNINGS[instrument].map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.label}
+                {!t.standard && !tuningsPro.allowed ? ' · PRO' : ''}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       <div>
-        <p className="text-slate-400 text-sm mb-2">
+        <p className="text-slate-400 text-sm mb-2 inline-flex items-center gap-2">
           Desenhos CAGED
-          {instrument !== 'guitar'
-            ? ' (disponível só para guitarra)'
-            : !hasCagedShapes(scaleKey)
-              ? ' (só para escalas derivadas da maior)'
-              : ''}
-          :
+          {!cagedPro.allowed && <ProBadge />}
+          <span>
+            {instrument !== 'guitar'
+              ? '(disponível só para guitarra)'
+              : !isStandard
+                ? '(só na afinação padrão)'
+                : !hasCagedShapes(scaleKey)
+                  ? '(só para escalas derivadas da maior)'
+                  : ''}
+          </span>
         </p>
         <div className="flex flex-wrap gap-2">
-          <button disabled={!cagedEnabled} onClick={() => setCaged(null)} className={btn(caged === null || !cagedEnabled)}>
+          <button disabled={!cagedEnabled} onClick={() => pickShape(null)} className={btn(caged === null || !cagedEnabled)}>
             Braço todo
           </button>
           {SHAPE_ORDER.map((shape) => (
-            <button key={shape} disabled={!cagedEnabled} onClick={() => setCaged(shape)} className={btn(cagedEnabled && caged === shape)}>
+            <button
+              key={shape}
+              disabled={!cagedEnabled}
+              onClick={() => pickShape(shape)}
+              className={`${btn(cagedEnabled && cagedPro.allowed && caged === shape)} ${!cagedPro.allowed ? 'opacity-70' : ''}`}
+            >
               Forma {formName(shape)}
             </button>
           ))}
         </div>
-        {cagedEnabled && (
+        {cagedEnabled && cagedPro.allowed && (
           <p className="text-slate-500 text-xs mt-2">
             {minorForms
               ? `Formas dos acordes menores em ${scale.root} menor.`
@@ -109,6 +158,7 @@ export function FretboardSection({ scale, instrument }: { scale: BuiltScale; ins
 
       <Fretboard
         instrument={instrument}
+        tuning={tuning.pitches}
         startFret={0}
         endFret={MAX_FRET}
         scale={{ root: root as NoteName, type: scaleKey, notes: notes as NoteName[] }}

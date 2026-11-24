@@ -1,163 +1,122 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { signIn } from "@/lib/supabase/client";
-import { Music } from "lucide-react";
+import { Suspense, useState } from 'react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { authErrorMessage, signIn, signInWithGoogle } from '@/lib/supabase/client';
+import { AuthShell, Divider, FormError, GoogleIcon } from '@/components/auth/AuthShell';
 
-export default function LoginPage() {
+function safeNext(value: string | null): string {
+  if (!value || !value.startsWith('/') || value.startsWith('//')) return '/';
+  return value;
+}
+
+function LoginForm() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const params = useSearchParams();
+  const next = safeNext(params.get('next'));
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(params.get('error'));
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
-
     try {
-      await signIn(email, password);
-      router.push("/dashboard");
+      await signIn(email.trim(), password);
+      router.replace(next);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao fazer login");
-    } finally {
+      setError(authErrorMessage(err));
       setLoading(false);
     }
   }
 
+  async function handleGoogle() {
+    setError(null);
+    try {
+      await signInWithGoogle(next);
+    } catch (err) {
+      setError(authErrorMessage(err));
+    }
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 px-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <Music className="w-10 h-10 text-blue-600" />
-            <span className="text-3xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              MusicOS
-            </span>
-          </Link>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Faça login para acessar sua conta
+    <AuthShell
+      title="Bem-vindo de volta"
+      subtitle="Entre para acessar seu plano e seu progresso."
+      footer={
+        <>
+          <p>
+            Ainda não tem conta?{' '}
+            <Link href={`/signup?next=${encodeURIComponent(next)}`} className="link font-semibold">
+              Criar conta grátis
+            </Link>
           </p>
+        </>
+      }
+    >
+      <FormError message={error} />
+
+      <button type="button" onClick={handleGoogle} className="btn-secondary w-full py-3">
+        <GoogleIcon />
+        Continuar com Google
+      </button>
+
+      <Divider />
+
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        <div>
+          <label htmlFor="email" className="field-label">
+            E-mail
+          </label>
+          <input
+            id="email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="w-full py-3"
+            placeholder="voce@exemplo.com"
+          />
         </div>
 
-        {/* Login Form */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 text-sm">
-                {error}
-              </div>
-            )}
-
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
-                  bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                  focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                  transition-colors"
-                placeholder="seu@email.com"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Senha
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
-                  bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                  focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                  transition-colors"
-                placeholder="••••••••"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold
-                hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? "Entrando..." : "Entrar"}
-            </button>
-          </form>
-
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">ou</span>
-            </div>
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <label htmlFor="password" className="field-label mb-0">
+              Senha
+            </label>
+            <Link href="/forgot-password" className="text-xs link">
+              Esqueci minha senha
+            </Link>
           </div>
-
-          {/* Google Login */}
-          <button
-            type="button"
-            className="w-full py-3 border border-gray-300 dark:border-gray-600 rounded-lg font-semibold
-              bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300
-              hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors
-              flex items-center justify-center gap-2"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path
-                fill="currentColor"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              />
-              <path
-                fill="currentColor"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              />
-              <path
-                fill="currentColor"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-              />
-              <path
-                fill="currentColor"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-              />
-            </svg>
-            Continuar com Google
-          </button>
+          <input
+            id="password"
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="w-full py-3"
+            placeholder="••••••••"
+          />
         </div>
 
-        {/* Links */}
-        <div className="mt-6 text-center">
-          <p className="text-gray-600 dark:text-gray-400">
-            Não tem conta?{" "}
-            <Link
-              href="/signup"
-              className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
-            >
-              Cadastre-se
-            </Link>
-          </p>
-          <p className="mt-2 text-gray-500 dark:text-gray-500 text-sm">
-            <Link href="/" className="hover:underline">
-              ← Voltar para a página inicial
-            </Link>
-          </p>
-        </div>
-      </div>
-    </div>
+        <button type="submit" disabled={loading} className="btn-primary w-full py-3">
+          {loading ? 'Entrando…' : 'Entrar'}
+        </button>
+      </form>
+    </AuthShell>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }

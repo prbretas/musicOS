@@ -17,22 +17,22 @@ export function ScaleStructuresTable({
     <table className="w-full border-collapse text-xs font-mono">
       <thead>
         <tr className="text-slate-300">
-          <th className="border border-slate-700 px-2 py-2 text-left font-sans">Escala / Modo</th>
-          <th className="border border-slate-700 px-2 py-2 font-sans" colSpan={cols}>
+          <th className="border border-ink-600 px-2 py-2 text-left font-sans">Escala / Modo</th>
+          <th className="border border-ink-600 px-2 py-2 font-sans" colSpan={cols}>
             Estrutura (intervalos)
           </th>
         </tr>
       </thead>
       <tbody>
         {SCALES.map((s) => (
-          <tr key={s.key} className={s.key === current ? 'bg-blue-950' : ''}>
-            <td className="border border-slate-700 px-2 py-2 font-sans">
-              <button onClick={() => onSelect(s.key)} className="text-blue-400 font-bold hover:underline text-left">
+          <tr key={s.key} className={s.key === current ? 'bg-brand-900/40' : ''}>
+            <td className="border border-ink-600 px-2 py-2 font-sans">
+              <button onClick={() => onSelect(s.key)} className="text-brand-300 font-bold hover:underline text-left">
                 {s.label}
               </button>
             </td>
             {Array.from({ length: cols }).map((_, i) => (
-              <td key={i} className="border border-slate-700 px-1.5 py-2 text-center text-slate-200 whitespace-nowrap">
+              <td key={i} className="border border-ink-600 px-1.5 py-2 text-center text-slate-200 whitespace-nowrap">
                 {s.steps[i] !== undefined ? formatStep(s.steps[i]) : '—'}
               </td>
             ))}

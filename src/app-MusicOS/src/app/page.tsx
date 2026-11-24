@@ -1,25 +1,36 @@
 'use client';
 
 /**
- * MusicOS - Estudio de Escalas.
- * Layout e conteudo portados do MusicPages (src/musicpages): um seletor de
- * tonica/escala no topo controla todas as secoes da pagina.
+ * MusicOS — Estúdio.
+ *
+ * É o app inteiro numa página: um seletor de tônica/escala no topo controla
+ * todas as seções. Funciona sem cadastro (modo grátis). Os recursos Pro
+ * aparecem com selo e, ao clicar, abrem o modal de upgrade.
  */
 
 import { useMemo, useState } from 'react';
-import Link from 'next/link';
 import { SCALES, SCALE_GROUP_LABELS, buildScale, harmonicField, type ScaleGroup } from '@/lib/music/escalas';
+import { isScaleFree } from '@/lib/features';
+import { INSTRUMENT_LABELS, type InstrumentType } from '@/lib/music/tunings';
+import { SiteHeader } from '@/components/layout/SiteHeader';
+import { SiteFooter } from '@/components/layout/SiteFooter';
 import { Section } from '@/components/estudio/Section';
 import { ScaleHeroCard } from '@/components/estudio/ScaleHeroCard';
 import { IntervalTable } from '@/components/estudio/IntervalTable';
 import { ScaleNotesPanel } from '@/components/estudio/ScaleNotesPanel';
 import { PianoKeyboard } from '@/components/estudio/PianoKeyboard';
-import { FretboardSection, type InstrumentType } from '@/components/estudio/FretboardSection';
+import { FretboardSection } from '@/components/estudio/FretboardSection';
 import { ChordFieldViewer } from '@/components/estudio/ChordFieldViewer';
 import { CircleOfFifths } from '@/components/estudio/CircleOfFifths';
 import { FloatingPanel } from '@/components/estudio/FloatingPanel';
 import { MetronomePanel } from '@/components/estudio/MetronomePanel';
 import { ScaleStructuresTable } from '@/components/estudio/ScaleStructuresTable';
+import { TunerPanel } from '@/components/estudio/TunerPanel';
+import { ExercisesSection } from '@/components/estudio/ExercisesSection';
+import { ProGate, useProFeature } from '@/components/pro/ProGate';
+import { ProBadge } from '@/components/pro/ProBadge';
+import { useUpgrade } from '@/components/pro/UpgradeProvider';
+import { useAuth } from '@/components/providers/AuthProvider';
 
 const TONICS = ['C', 'C# / Db', 'D', 'D# / Eb', 'E', 'F', 'F# / Gb', 'G', 'G# / Ab', 'A', 'A# / Bb', 'B'];
 
@@ -31,26 +42,29 @@ const NAV = [
   ['braco', 'Braço'],
   ['acordes', 'Acordes'],
   ['ciclo', 'Ciclo de Quintas'],
+  ['exercicios', 'Exercícios'],
 ] as const;
 
-const OTHER_SCREENS = [
-  ['/dashboard', 'Dashboard'],
-  ['/dashboard/exercises', 'Exercícios'],
-  ['/dashboard/tools', 'Ferramentas'],
-  ['/pricing', 'Planos'],
-  ['/login', 'Login'],
-  ['/signup', 'Cadastro'],
-];
+type Panel = 'metronomo' | 'estruturas' | 'afinador' | null;
 
 export default function EstudioPage() {
   const [rootPc, setRootPc] = useState(0);
   const [scaleKey, setScaleKey] = useState('maior');
   const [instrument, setInstrument] = useState<InstrumentType>('guitar');
-  const [tetrads, setTetrads] = useState(true);
-  const [panel, setPanel] = useState<'metronomo' | 'estruturas' | null>(null);
+  const [tetrads, setTetrads] = useState(false);
+  const [panel, setPanel] = useState<Panel>(null);
+
+  const { entitlement } = useAuth();
+  const { openUpgrade } = useUpgrade();
+  const scalesPro = useProFeature('scales-advanced');
+  const tetradsPro = useProFeature('tetrads');
+  const ukulelePro = useProFeature('ukulele');
+  const tunerPro = useProFeature('tuner');
+  const exportPro = useProFeature('export');
 
   const scale = useMemo(() => buildScale(rootPc, scaleKey), [rootPc, scaleKey]);
-  const field = useMemo(() => harmonicField(scale, tetrads), [scale, tetrads]);
+  const useTetrads = tetrads && tetradsPro.allowed;
+  const field = useMemo(() => harmonicField(scale, useTetrads), [scale, useTetrads]);
   const keyPc = scale.def.parentOffset !== undefined ? (rootPc + scale.def.parentOffset) % 12 : null;
 
   const groups = (Object.keys(SCALE_GROUP_LABELS) as ScaleGroup[]).map((g) => ({
@@ -58,77 +72,120 @@ export default function EstudioPage() {
     scales: SCALES.filter((s) => s.group === g),
   }));
 
-  const select = 'bg-slate-800 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm';
+  function pickScale(key: string) {
+    if (!isScaleFree(key) && !scalesPro.gate()) return;
+    setScaleKey(key);
+  }
+
+  function pickInstrument(value: InstrumentType) {
+    if (value === 'ukulele' && !ukulelePro.gate()) return;
+    setInstrument(value);
+  }
+
+  function toggleTetrads(v: boolean) {
+    if (v && !tetradsPro.gate()) return;
+    setTetrads(v);
+  }
+
+  function togglePanel(p: Exclude<Panel, null>) {
+    if (p === 'afinador' && !tunerPro.gate()) return;
+    setPanel(panel === p ? null : p);
+  }
+
+  function handlePrint() {
+    if (!exportPro.gate()) return;
+    window.print();
+  }
+
   const toolBtn = (active: boolean) =>
-    `px-3 py-2 rounded-lg text-sm font-semibold ${active ? 'bg-blue-500 text-white' : 'bg-blue-600 hover:bg-blue-500 text-white'}`;
+    `btn ${active ? 'bg-brand-500 text-white' : 'bg-ink-600 text-slate-200 hover:bg-ink-500 border border-ink-500'}`;
 
   return (
-    <div className="min-h-screen bg-[#1e1e1e] text-slate-200 flex flex-col">
-      {/* Topbar fixa: tonica, escala, instrumento e ferramentas */}
-      <header className="sticky top-0 z-40 bg-[#141414]/95 backdrop-blur border-b border-slate-800">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
-          <Link href="/" className="text-xl font-black text-white mr-auto">
-            🎵 MusicOS
-          </Link>
-
-          <label className="sr-only" htmlFor="tonica">
-            Tônica
-          </label>
-          <select id="tonica" value={rootPc} onChange={(e) => setRootPc(Number(e.target.value))} className={select}>
-            {TONICS.map((t, i) => (
-              <option key={t} value={i}>
-                {t}
-              </option>
+    <div className="min-h-screen flex flex-col">
+      <SiteHeader
+        nav={
+          <nav className="pb-2 -mt-1 flex gap-1 overflow-x-auto text-sm no-print" aria-label="Seções">
+            {NAV.map(([id, label]) => (
+              <a
+                key={id}
+                href={`#${id}`}
+                className="px-3 py-1.5 rounded-md text-slate-400 hover:text-white hover:bg-ink-600 whitespace-nowrap transition-colors"
+              >
+                {label}
+                {id === 'exercicios' && !entitlement.isPro && <ProBadge className="ml-1.5" />}
+              </a>
             ))}
-          </select>
+          </nav>
+        }
+      >
+        <label className="sr-only" htmlFor="tonica">
+          Tônica
+        </label>
+        <select id="tonica" value={rootPc} onChange={(e) => setRootPc(Number(e.target.value))}>
+          {TONICS.map((t, i) => (
+            <option key={t} value={i}>
+              {t}
+            </option>
+          ))}
+        </select>
 
-          <label className="sr-only" htmlFor="tipoEscala">
-            Escala
-          </label>
-          <select id="tipoEscala" value={scaleKey} onChange={(e) => setScaleKey(e.target.value)} className={select}>
-            {groups.map(({ group, scales }) => (
-              <optgroup key={group} label={`- ${SCALE_GROUP_LABELS[group]} -`}>
-                {scales.map((s) => (
-                  <option key={s.key} value={s.key}>
-                    {s.label}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
+        <label className="sr-only" htmlFor="tipoEscala">
+          Escala
+        </label>
+        <select id="tipoEscala" value={scaleKey} onChange={(e) => pickScale(e.target.value)} className="max-w-[240px]">
+          {groups.map(({ group, scales }) => (
+            <optgroup key={group} label={`— ${SCALE_GROUP_LABELS[group]} —`}>
+              {scales.map((s) => (
+                <option key={s.key} value={s.key}>
+                  {s.label}
+                  {!isScaleFree(s.key) && !scalesPro.allowed ? ' · PRO' : ''}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
 
-          <label className="sr-only" htmlFor="instrumento">
-            Instrumento
-          </label>
-          <select
-            id="instrumento"
-            value={instrument}
-            onChange={(e) => setInstrument(e.target.value as InstrumentType)}
-            className={select}
-          >
-            <option value="guitar">🎸 Guitarra / Violão</option>
-            <option value="ukulele">🪕 Ukulele</option>
-          </select>
+        <label className="sr-only" htmlFor="instrumento">
+          Instrumento
+        </label>
+        <select id="instrumento" value={instrument} onChange={(e) => pickInstrument(e.target.value as InstrumentType)}>
+          <option value="guitar">🎸 {INSTRUMENT_LABELS.guitar}</option>
+          <option value="ukulele">🪕 {INSTRUMENT_LABELS.ukulele}{!ukulelePro.allowed ? ' · PRO' : ''}</option>
+        </select>
 
-          <button onClick={() => setPanel(panel === 'metronomo' ? null : 'metronomo')} className={toolBtn(panel === 'metronomo')}>
+        <div className="flex items-center gap-2 ml-auto no-print">
+          <button onClick={() => togglePanel('metronomo')} className={toolBtn(panel === 'metronomo')}>
             ⏱ Metrônomo
           </button>
-          <button onClick={() => setPanel(panel === 'estruturas' ? null : 'estruturas')} className={toolBtn(panel === 'estruturas')}>
+          <button onClick={() => togglePanel('estruturas')} className={toolBtn(panel === 'estruturas')}>
             📖 Estruturas
           </button>
+          <button onClick={() => togglePanel('afinador')} className={toolBtn(panel === 'afinador')}>
+            🎤 Afinador
+            {!tunerPro.allowed && <ProBadge />}
+          </button>
+          <button onClick={handlePrint} className={toolBtn(false)} title="Imprimir ou salvar em PDF">
+            🖨 Exportar
+            {!exportPro.allowed && <ProBadge />}
+          </button>
         </div>
+      </SiteHeader>
 
-        <nav className="max-w-6xl mx-auto px-4 pb-2 flex gap-4 overflow-x-auto text-sm" aria-label="Seções">
-          {NAV.map(([id, label]) => (
-            <a key={id} href={`#${id}`} className="text-slate-400 hover:text-white whitespace-nowrap">
-              {label}
-            </a>
-          ))}
-        </nav>
-      </header>
+      <main className="max-w-7xl mx-auto w-full px-4 py-8 space-y-14 flex-1">
+        {!entitlement.isPro && (
+          <div className="no-print flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-pro-400/30 bg-gradient-to-r from-pro-400/10 to-transparent px-5 py-4">
+            <p className="text-sm text-slate-300">
+              <strong className="text-white">Modo grátis.</strong> Use escalas, acordes, braço e metrônomo à vontade.{' '}
+              <span className="text-slate-400">Os itens com selo</span> <ProBadge />{' '}
+              <span className="text-slate-400">fazem parte do Pro: todas as escalas, tétrades, CAGED, afinador e treino auditivo.</span>
+            </p>
+            <button onClick={() => openUpgrade()} className="btn-pro shrink-0">
+              Conhecer o Pro
+            </button>
+          </div>
+        )}
 
-      <main className="max-w-6xl mx-auto w-full px-4 py-8 space-y-14 flex-1">
-        <section id="escala" className="scroll-mt-28">
+        <section id="escala" className="scroll-mt-36">
           <ScaleHeroCard scale={scale} rootPc={rootPc} />
         </section>
 
@@ -136,19 +193,24 @@ export default function EstudioPage() {
           <IntervalTable scale={scale} />
         </Section>
 
-        <Section id="transpositor" icon="🎹" title="Transpositor de Escalas Musicais">
-          <ScaleNotesPanel scale={scale} field={field} tetrads={tetrads} onTetradsChange={setTetrads} />
+        <Section
+          id="transpositor"
+          icon="🎹"
+          title="Transpositor de Escalas Musicais"
+          actions={!tetradsPro.allowed ? <span className="text-xs text-slate-500 inline-flex items-center gap-1.5">Tétrades <ProBadge /></span> : undefined}
+        >
+          <ScaleNotesPanel scale={scale} field={field} tetrads={useTetrads} onTetradsChange={toggleTetrads} />
         </Section>
 
         <Section id="teclado" icon="🎹" title="Teclado">
           <PianoKeyboard scale={scale} />
         </Section>
 
-        <Section id="braco" icon="🎸" title={`Braço do Instrumento — ${instrument === 'guitar' ? 'Guitarra' : 'Ukulele'}`}>
+        <Section id="braco" icon="🎸" title={`Braço do Instrumento — ${INSTRUMENT_LABELS[instrument]}`}>
           <FretboardSection scale={scale} instrument={instrument} />
         </Section>
 
-        <Section id="acordes" icon="🎸" title={`Visualizador de Acordes — ${tetrads ? 'tétrades' : 'tríades'}`}>
+        <Section id="acordes" icon="🎸" title={`Visualizador de Acordes — ${useTetrads ? 'tétrades' : 'tríades'}`}>
           <ChordFieldViewer field={field} />
         </Section>
 
@@ -158,22 +220,27 @@ export default function EstudioPage() {
             minor={scale.def.parentOffset === 3}
             onApply={(pcValue, key) => {
               setRootPc(pcValue);
-              setScaleKey(key);
+              pickScale(key);
             }}
           />
         </Section>
+
+        <Section
+          id="exercicios"
+          icon="🎧"
+          title="Treino Auditivo"
+          actions={!entitlement.isPro ? <ProBadge /> : undefined}
+        >
+          <ProGate feature="exercises">
+            <ExercisesSection />
+          </ProGate>
+        </Section>
       </main>
 
-      <footer className="border-t border-slate-800 py-6 text-center text-sm text-slate-500 space-x-4">
-        {OTHER_SCREENS.map(([href, label]) => (
-          <Link key={href} href={href} className="hover:text-slate-300">
-            {label}
-          </Link>
-        ))}
-      </footer>
+      <SiteFooter />
 
       {panel === 'metronomo' && (
-        <FloatingPanel title="Metrônomo Digital" onClose={() => setPanel(null)}>
+        <FloatingPanel title="Metrônomo" onClose={() => setPanel(null)}>
           <MetronomePanel />
         </FloatingPanel>
       )}
@@ -182,10 +249,15 @@ export default function EstudioPage() {
           <ScaleStructuresTable
             current={scaleKey}
             onSelect={(k) => {
-              setScaleKey(k);
+              pickScale(k);
               setPanel(null);
             }}
           />
+        </FloatingPanel>
+      )}
+      {panel === 'afinador' && (
+        <FloatingPanel title="🎤 Afinador" onClose={() => setPanel(null)}>
+          <TunerPanel />
         </FloatingPanel>
       )}
     </div>
