@@ -9,6 +9,7 @@
  */
 
 import { createServerClient } from '@supabase/ssr';
+import { publicOrigin } from '@/lib/http/origin';
 import { NextResponse, type NextRequest } from 'next/server';
 
 const PROTECTED_PREFIXES = ['/account', '/checkout', '/api/stripe/checkout', '/api/stripe/portal', '/api/billing', '/api/account'];
@@ -49,16 +50,13 @@ export async function middleware(request: NextRequest) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Faça login para continuar.' }, { status: 401 });
     }
-    const url = request.nextUrl.clone();
-    url.pathname = '/login';
+    const url = new URL('/login', publicOrigin(request.headers, request.url));
     url.search = `?next=${encodeURIComponent(pathname + request.nextUrl.search)}`;
     return NextResponse.redirect(url);
   }
 
   if (isAuthPage && user) {
-    const url = request.nextUrl.clone();
-    url.pathname = safeNext(searchParams.get('next'));
-    url.search = '';
+    const url = new URL(safeNext(searchParams.get('next')), publicOrigin(request.headers, request.url));
     return NextResponse.redirect(url);
   }
 
