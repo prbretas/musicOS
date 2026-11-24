@@ -104,8 +104,16 @@ switch ($Action) {
     Build-Image $vars
     Run-Container
   }
-  'stop'   { podman stop $Name; Write-Host '>> Container pausado. Retome com .\podman.ps1 start' -ForegroundColor Green }
-  'start'  { podman start $Name | Out-Null; Write-Host ">> No ar: http://localhost:$Port" -ForegroundColor Green }
+  'stop'   {
+    podman stop $Name | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw 'Nenhum container "musicos" para parar. Suba com .\podman.ps1 up' }
+    Write-Host '>> Container pausado. Retome com .\podman.ps1 start' -ForegroundColor Green
+  }
+  'start'  {
+    podman start $Name | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw 'Container "musicos" não existe neste modo do Podman. Rode .\podman.ps1 up (ele reconstrói a imagem se preciso).' }
+    Write-Host ">> No ar: http://localhost:$Port" -ForegroundColor Green
+  }
   'logs'   { podman logs -f $Name }
   'status' { podman ps -a --filter "name=$Name" }
   'down'   {
