@@ -7,6 +7,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { playChordMidi, playMidi, playSequenceMidi } from '@/lib/audio/synth';
+import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/components/providers/AuthProvider';
+import { RankingPanel } from './RankingPanel';
+import { ProgressPanel } from './ProgressPanel';
 
 type Mode = 'intervals' | 'chords';
 type Level = 'beginner' | 'intermediate' | 'advanced';
@@ -108,7 +112,7 @@ function randomRoot(): number {
   return 55 + Math.floor(Math.random() * 12); // G3..F#4
 }
 
-export function ExercisesSection() {
+function EarTrainer() {
   const [mode, setMode] = useState<Mode>('intervals');
   const [level, setLevel] = useState<Level>('beginner');
   const [root, setRoot] = useState(randomRoot);
@@ -116,6 +120,9 @@ export function ExercisesSection() {
   const [picked, setPicked] = useState<string | null>(null);
   const [stats, setStats] = useState<Stats>({ correct: 0, total: 0, streak: 0, best: 0 });
   const [melodic, setMelodic] = useState(true);
+  const { user, entitlement } = useAuth();
+  const [sessionPoints, setSessionPoints] = useState(0);
+  const [scoreNote, setScoreNote] = useState<string | null>(null);
 
   const statsKey = `${mode}:${level}`;
   const options = useMemo(() => (mode === 'intervals' ? INTERVALS[level] : CHORDS[level]), [mode, level]);
@@ -161,6 +168,32 @@ export function ExercisesSection() {
     };
     setStats(updated);
     saveStats(statsKey, updated);
+
+    // Pontuação oficial (ranking): calculada e validada no servidor
+    if (user && entitlement.isPro) {
+      void createClient()
+        .rpc('record_exercise_attempt', { p_mode: mode, p_level: level, p_correct: ok })
+        .then(({ data, error }) => {
+          if (error) {
+            setScoreNote(
+              /too_fast/.test(error.message)
+                ? 'Resposta rápida demais: não pontuou no ranking.'
+                : 'Sem conexão: esta resposta não entrou no ranking.'
+            );
+            return;
+          }
+          const row = (Array.isArray(data) ? data[0] : data) as { points: number; answered_today: number } | null;
+          const pts = row?.points ?? 0;
+          setSessionPoints((p) => p + pts);
+          setScoreNote(
+            row && row.answered_today > 400
+              ? 'Limite diário de 400 respostas pontuadas atingido. Continue treinando, amanhã conta de novo.'
+              : pts > 0
+                ? `+${pts} ${pts === 1 ? 'ponto' : 'pontos'} no ranking`
+                : null
+          );
+        });
+    }
   }
 
   const accuracy = stats.total ? Math.round((stats.correct / stats.total) * 100) : 0;
@@ -215,6 +248,11 @@ export function ExercisesSection() {
           <span className="text-slate-400">
             Sequência: <strong className="text-pro-300">{stats.streak}</strong> · melhor {stats.best}
           </span>
+          {user && entitlement.isPro && (
+            <span className="text-slate-400">
+              Nesta sessão: <strong className="text-brand-300">{sessionPoints} pts</strong>
+            </span>
+          )}
         </div>
       </div>
 
@@ -270,9 +308,44 @@ export function ExercisesSection() {
         )}
       </div>
 
+      {scoreNote && <p className="text-xs text-brand-300 -mt-3">{scoreNote}</p>}
+
       <p className="text-xs text-slate-500">
-        Dica: comece pelo nível iniciante e só suba quando passar de 90% de acertos. Seu progresso fica salvo neste navegador.
+        Pontos por acerto: iniciante 1, intermediário 2, avançado 3 (+1 em acordes). Dica: comece pelo nível iniciante e só suba quando passar de 90% de acertos. Seu progresso fica salvo neste navegador.
       </p>
+    </div>
+  );
+}
+
+type Tab = 'train' | 'progress' | 'ranking';
+
+export function ExercisesSection() {
+  const [tab, setTab] = useState<Tab>('train');
+  const tabs: { id: Tab; label: string }[] = [
+    { id: 'train', label: '🎧 Treinar' },
+    { id: 'progress', label: '📈 Meu progresso' },
+    { id: 'ranking', label: '🏆 Ranking' },
+  ];
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Exercícios">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            role="tab"
+            aria-selected={tab === t.id}
+            onClick={() => setTab(t.id)}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+              tab === t.id ? 'bg-brand-500 text-white' : 'bg-ink-600 text-slate-300 hover:bg-ink-500'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+      {tab === 'train' && <EarTrainer />}
+      {tab === 'progress' && <ProgressPanel />}
+      {tab === 'ranking' && <RankingPanel />}
     </div>
   );
 }

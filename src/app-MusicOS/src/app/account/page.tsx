@@ -13,6 +13,7 @@ import { createClient } from '@/lib/supabase/client';
 import { SiteHeader } from '@/components/layout/SiteHeader';
 import { SiteFooter } from '@/components/layout/SiteFooter';
 import { ProBadge } from '@/components/pro/ProBadge';
+import { PLACE_MEDAL, formatBRL } from '@/lib/ranking/rewards';
 
 function formatDate(d: Date | null): string {
   return d ? d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }) : '—';
@@ -31,6 +32,16 @@ function AccountInner() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteText, setDeleteText] = useState('');
   const [deleting, setDeleting] = useState(false);
+  const [rewards, setRewards] = useState<{ id: number; period: string; place: number; amount_cents: number; status: string }[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    void createClient()
+      .from('ranking_rewards')
+      .select('id, period, place, amount_cents, status')
+      .order('period', { ascending: false })
+      .then(({ data }) => setRewards((data as typeof rewards) ?? []));
+  }, [user]);
 
   const checkoutSuccess = params.get('checkout') === 'success';
   const passwordUpdated = params.get('password') === 'updated';
@@ -204,6 +215,31 @@ function AccountInner() {
             </div>
           </div>
         </section>
+
+        {rewards.length > 0 && (
+          <section className="card p-6">
+            <h2 className="font-bold text-white text-lg mb-3">Prêmios do ranking</h2>
+            <ul className="space-y-2">
+              {rewards.map((r) => (
+                <li key={r.id} className="flex flex-wrap items-center gap-2 text-sm text-slate-300">
+                  <span className="text-lg">{PLACE_MEDAL[r.place]}</span>
+                  <span className="text-white font-semibold">{r.place}º lugar</span>
+                  <span>em {r.period.split('-').reverse().join('/')}</span>
+                  <span className="text-slate-500">·</span>
+                  <span>
+                    {r.status === 'applied'
+                      ? `${formatBRL(r.amount_cents)} de desconto aplicado na próxima cobrança`
+                      : r.status === 'badge_only'
+                        ? 'selo do pódio'
+                        : r.status === 'rejected'
+                          ? 'não confirmado'
+                          : 'em conferência'}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* Perfil */}
         <section className="card p-6">

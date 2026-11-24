@@ -61,26 +61,33 @@ export default function PrivacyPage() {
         nossos servidores. A permissão pode ser revogada a qualquer momento no navegador.
       </p>
 
-      <h2>5. Cookies</h2>
+      <h2>5. Ranking dos exercícios</h2>
+      <p>
+        Assinantes que fazem os exercícios aparecem no ranking semanal e mensal com o primeiro nome e a inicial do sobrenome,
+        a pontuação e o percentual de acerto. E-mail e outros dados nunca são exibidos. Você pode sair do ranking a qualquer
+        momento desmarcando &quot;Aparecer no ranking&quot; na aba Ranking; quem sai também não concorre aos prêmios.
+      </p>
+
+      <h2>6. Cookies</h2>
       <p>
         Usamos apenas cookies estritamente necessários para manter você logado. Não usamos cookies de rastreamento de
         terceiros.
       </p>
 
-      <h2>6. Seus direitos (LGPD)</h2>
+      <h2>7. Seus direitos (LGPD)</h2>
       <p>
         Você pode solicitar acesso, correção, portabilidade ou exclusão dos seus dados, e revogar consentimentos, pelo
         e-mail <a href="mailto:suporte@musicos.app">suporte@musicos.app</a>. Respondemos em até 15 dias. Ao excluir a
         conta, seus dados pessoais são apagados; registros fiscais de pagamento são mantidos pelo prazo legal.
       </p>
 
-      <h2>7. Segurança e retenção</h2>
+      <h2>8. Segurança e retenção</h2>
       <p>
         Dados trafegam criptografados (HTTPS) e ficam em provedores com certificações de segurança. Mantemos seus dados
         enquanto a conta existir.
       </p>
 
-      <h2>8. Alterações</h2>
+      <h2>9. Alterações</h2>
       <p>Mudanças relevantes nesta Política serão comunicadas no Serviço ou por e-mail.</p>
 
       <p>

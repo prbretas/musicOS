@@ -28,6 +28,8 @@ export interface Profile {
   subscription_status: SubscriptionStatus;
   current_period_end: string | null;
   cancel_at_period_end: boolean;
+  /** Aparece no ranking dos exercícios (padrão true) */
+  show_in_ranking?: boolean;
   created_at: string;
   updated_at: string;
 }
