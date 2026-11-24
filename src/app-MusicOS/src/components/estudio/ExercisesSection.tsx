@@ -12,6 +12,7 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import { RankingPanel } from './RankingPanel';
 import { ProgressPanel } from './ProgressPanel';
 import { ProGate, useProFeature } from '@/components/pro/ProGate';
+import { CagedTrainer } from './CagedTrainer';
 
 type Mode = 'intervals' | 'chords';
 type Level = 'beginner' | 'intermediate' | 'advanced';
@@ -326,12 +327,13 @@ function EarTrainer() {
   );
 }
 
-type Tab = 'train' | 'progress' | 'ranking';
+type Tab = 'train' | 'caged' | 'progress' | 'ranking';
 
 export function ExercisesSection() {
   const [tab, setTab] = useState<Tab>('train');
   const tabs: { id: Tab; label: string }[] = [
     { id: 'train', label: '🎧 Treinar' },
+    { id: 'caged', label: '🎸 Escalas no CAGED' },
     { id: 'progress', label: '📈 Meu progresso' },
     { id: 'ranking', label: '🏆 Ranking' },
   ];
@@ -353,6 +355,11 @@ export function ExercisesSection() {
         ))}
       </div>
       {tab === 'train' && <EarTrainer />}
+      {tab === 'caged' && (
+        <ProGate feature="caged" title="Escalas no CAGED">
+          <CagedTrainer />
+        </ProGate>
+      )}
       {tab === 'progress' && (
         <ProGate feature="exercises" title="Histórico de progresso">
           <ProgressPanel />

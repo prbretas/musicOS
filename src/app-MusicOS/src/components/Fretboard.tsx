@@ -28,6 +28,10 @@ interface FretboardProps {
   focusNotes?: NoteName[];
   /** Notas de acorde destacadas com anel branco. As outras notas ativas ficam mais fracas. */
   chordNotes?: NoteName[];
+  /** Posições exatas de um desenho de acorde (corda, casa), destacadas com anel branco */
+  grip?: Array<{ s: number; f: number; role?: string }>;
+  /** Mostrar só o desenho do acorde (esconde o restante da escala) */
+  gripOnly?: boolean;
   onNoteClick?: (note: NoteName, fret: number, string: number) => void;
 }
 
@@ -60,9 +64,12 @@ export function Fretboard({
   fretWindows,
   focusNotes,
   chordNotes,
+  grip,
+  gripOnly = false,
   stringStartFret,
   onNoteClick,
 }: FretboardProps) {
+  const gripAt = (s: number, f: number) => grip?.find((g) => g.s === s && g.f === f);
   const [hovered, setHovered] = useState<string | null>(null);
 
   const strings = tuning ?? (instrument === 'guitar' ? GUITAR_TUNING : UKULELE_TUNING);
@@ -191,10 +198,11 @@ export function Fretboard({
             const degree = scaleNotes.indexOf(note);
             const inScale = hasScale && degree !== -1;
             const inFocus = !focusNotes || focusNotes.includes(note as NoteName);
-            const active = inScale && inFocus && inWindow(fret);
+            const gripHere = gripAt(s, fret);
+            const active = inScale && inFocus && inWindow(fret) && (!gripOnly || !!gripHere);
             const marked = !hasScale && hasHighlight && highlightedNotes.includes(note as NoteName);
-            const hasChord = !!chordNotes && chordNotes.length > 0;
-            const isChordTone = hasChord && chordNotes!.includes(note as NoteName);
+            const hasChord = (!!chordNotes && chordNotes.length > 0) || (!!grip && grip.length > 0);
+            const isChordTone = grip ? !!gripHere : hasChord && chordNotes!.includes(note as NoteName);
 
             let fill = '#1e293b';
             let stroke = '#334155';

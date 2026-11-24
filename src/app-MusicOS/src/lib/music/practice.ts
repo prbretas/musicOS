@@ -9,10 +9,11 @@
  * para o instrumento e a afinação escolhidos (lib/music/tablature).
  */
 
-import { pitchToMidi } from './tunings';
+import { pitchToMidi, semitonesAt } from './tunings';
+import { computeVoicings } from './voicings';
 import type { TabNote } from './tablature';
 
-export type PracticeCategory = 'tecnica' | 'riff' | 'melodia';
+export type PracticeCategory = 'tecnica' | 'riff' | 'arpejo' | 'melodia';
 export type PracticeLevel = 'iniciante' | 'intermediario' | 'avancado';
 
 export interface PracticeNote {
@@ -41,13 +42,14 @@ export interface PracticeExercise {
   /** Região preferida da mão (casa inicial) para calcular a tab */
   position?: number;
   notes?: PracticeNote[];
-  /** Exercícios gerados para a afinação atual (técnica corda a corda) */
-  build?: (tuning: string[], stringStartFret?: number[]) => { notes: PracticeNote[]; positions: (TabNote | null)[] };
+  /** Exercícios gerados para a afinação atual (técnica corda a corda, arpejos). null = não cabe no instrumento */
+  build?: (tuning: string[], stringStartFret?: number[]) => { notes: PracticeNote[]; positions: (TabNote | null)[] } | null;
 }
 
 export const CATEGORY_LABEL: Record<PracticeCategory, string> = {
   tecnica: 'Técnica',
   riff: 'Riffs e frases',
+  arpejo: 'Arpejos',
   melodia: 'Melodias',
 };
 
@@ -76,6 +78,140 @@ export function seq(text: string, defaultDur = 1): PracticeNote[] {
 function boogie(root: string): PracticeNote[] {
   const r = pitchToMidi(root);
   return [0, 4, 7, 9, 10, 9, 7, 4].map((i) => ({ m: r + i, d: 0.5 }));
+}
+
+
+// ------------------------------------------------------------------ Arpejos
+
+const NOTE_PC: Record<string, number> = { C: 0, 'C#': 1, D: 2, 'D#': 3, E: 4, F: 5, 'F#': 6, G: 7, 'G#': 8, A: 9, 'A#': 10, B: 11 };
+const QUALITY: Record<string, number[]> = {
+  '': [0, 4, 7],
+  m: [0, 3, 7],
+  '7': [0, 4, 7, 10],
+  '7M': [0, 4, 7, 11],
+  m7: [0, 3, 7, 10],
+};
+
+/** "Am", "C7M", "Dm7", "G7" → classes de altura, fundamental primeiro */
+export function chordPcs(symbol: string): number[] {
+  const m = /^([A-G]#?)(.*)$/.exec(symbol);
+  if (!m || !(m[2] in QUALITY)) throw new Error(`Acorde desconhecido: ${symbol}`);
+  const root = NOTE_PC[m[1]];
+  return QUALITY[m[2]].map((i) => (root + i) % 12);
+}
+
+export type ArpStrings = 'all' | 3 | 4;
+
+export interface ArpeggioSpec {
+  chords: string[];
+  /** Todas as cordas, ou só as 3/4 mais agudas */
+  strings: ArpStrings;
+  /** Compassos por acorde (padrão 1) */
+  bars?: number;
+  /** Mantém cada acorde numa mesma região, subindo o braço (para inversões) */
+  ascend?: boolean;
+}
+
+/**
+ * Arpejo de uma progressão: para cada acorde escolhe um desenho tocável no
+ * grupo de cordas pedido (perto do anterior, para a mão não pular) e toca as
+ * cordas subindo e descendo.
+ *
+ *  - 6 cordas: tercinas, sobe e desce (12 notas por compasso)
+ *  - 5 cordas: colcheias, sobe 5 e desce 3 (8 notas)
+ *  - 4 cordas: semicolcheias, sobe e desce duas vezes (16 notas)
+ *  - 3 cordas: tercinas, sobe e desce duas vezes (12 notas)
+ */
+export function buildArpeggio(
+  tuning: string[],
+  stringStartFret: number[] | undefined,
+  spec: ArpeggioSpec
+): { notes: PracticeNote[]; positions: (TabNote | null)[] } | null {
+  const n = tuning.length;
+  const k = spec.strings === 'all' ? n : spec.strings;
+  if (k > n || k < 3) return null;
+  const off = n - k;
+  const starts = stringStartFret ?? new Array<number>(n).fill(0);
+  const sub = tuning.slice(off);
+  const subStarts = starts.slice(off);
+  const open = tuning.map(pitchToMidi);
+  const bars = spec.bars ?? 1;
+
+  const notes: PracticeNote[] = [];
+  const positions: (TabNote | null)[] = [];
+  let prevCenter: number | null = null;
+
+  for (const symbol of spec.chords) {
+    const voicings = computeVoicings({
+      tuning: sub,
+      chordPcs: chordPcs(symbol),
+      stringStartFret: subStarts,
+      maxFret: 12,
+      requireRootBass: spec.strings === 'all',
+      limit: 8,
+    }).filter((v) => {
+      const sounded = v.frets.filter((f) => f >= 0).length;
+      return spec.strings === 'all' ? sounded >= Math.min(4, k) : sounded === k;
+    });
+    if (!voicings.length) return null;
+
+    const center = (frets: number[]) => {
+      const played = frets.filter((f) => f >= 0);
+      return played.reduce((a, b) => a + b, 0) / played.length;
+    };
+    let pick = voicings[0];
+    if (prevCenter !== null) {
+      const pc = prevCenter;
+      const pool = spec.ascend ? voicings.filter((v) => center(v.frets) > pc + 0.5) : voicings;
+      const from = pool.length ? pool : voicings;
+      pick = from.reduce((best, v) =>
+        Math.abs(center(v.frets) - pc) < Math.abs(center(best.frets) - pc) ? v : best
+      );
+    }
+    prevCenter = center(pick.frets);
+
+    // cordas que soam, da grave para a aguda (índices na afinação inteira)
+    const up = pick.frets
+      .map((f, i) => ({ s: i + off, f }))
+      .filter((x) => x.f >= 0);
+    let cycle: { s: number; f: number }[];
+    let dur: number;
+    let perBar: number;
+    if (up.length >= 6) {
+      cycle = [...up, ...[...up].reverse()];
+      dur = 1 / 3;
+      perBar = 12;
+    } else if (up.length === 5) {
+      cycle = [...up, ...up.slice(1, 4).reverse()];
+      dur = 0.5;
+      perBar = 8;
+    } else if (up.length === 4) {
+      cycle = [...up, ...[...up].reverse()];
+      dur = 0.25;
+      perBar = 16;
+    } else {
+      cycle = [...up, ...[...up].reverse()];
+      dur = 1 / 3;
+      perBar = 12;
+    }
+    for (let i = 0; i < perBar * bars; i++) {
+      const p = cycle[i % cycle.length];
+      const semis = semitonesAt(p.f, starts[p.s] ?? 0) ?? 0;
+      notes.push({ m: open[p.s] + semis, d: dur });
+      positions.push({ s: p.s, f: p.f });
+    }
+  }
+  // fecha com a primeira nota do arpejo, em semibreve
+  const first = positions[0];
+  if (first) {
+    notes.push({ m: notes[0].m, d: 4 });
+    positions.push(first);
+  }
+  return { notes, positions };
+}
+
+function arpeggio(spec: ArpeggioSpec) {
+  return (tuning: string[], starts?: number[]) => buildArpeggio(tuning, starts, spec);
 }
 
 export const PRACTICE: PracticeExercise[] = [
@@ -225,6 +361,80 @@ export const PRACTICE: PracticeExercise[] = [
     description: 'Arpejo e escala em semicolcheias, no estilo das frases de choro. Exige mão esquerda solta.',
     tip: 'Comece a 50% do andamento e use o loop.',
     notes: seq('D4 F#4 A4 D5 C#5 A4 F#4 E4 | D4 E4 F#4 G4 A4 B4 C#5 D5 | E5 D5 C#5 B4 A4 G4 F#4 E4 | D4:2', 0.25),
+  },
+
+
+  // -------------------------------------------------- Arpejos
+  {
+    id: 'arpejo-3-cordas',
+    title: 'Arpejos nas 3 primeiras cordas: C – G – Am – F',
+    category: 'arpejo',
+    level: 'iniciante',
+    bpm: 60,
+    meter: 4,
+    source: 'original',
+    description: 'Tríades nas cordas 1, 2 e 3, subindo e descendo em tercinas. Os desenhos ficam perto um do outro, sem pular no braço.',
+    tip: 'Palhetada alternada ou dedos p-i-m. Deixe as notas soarem juntas, como um acorde quebrado.',
+    build: arpeggio({ chords: ['C', 'G', 'Am', 'F'], strings: 3 }),
+  },
+  {
+    id: 'arpejo-3-cordas-inversoes',
+    title: 'Tríade de C nas 3 primeiras cordas, subindo o braço',
+    category: 'arpejo',
+    level: 'intermediario',
+    bpm: 60,
+    meter: 4,
+    source: 'original',
+    description: 'O mesmo acorde de C em três inversões (fundamental, 1ª e 2ª inversão), cada uma mais acima no braço. Base do estilo funk e dos solos com tríades.',
+    tip: 'Diga em voz alta qual nota é a fundamental em cada desenho.',
+    build: arpeggio({ chords: ['C', 'C', 'C'], strings: 3, ascend: true }),
+  },
+  {
+    id: 'arpejo-4-cordas',
+    title: 'Arpejos nas 4 primeiras cordas: Am – Dm – E – Am',
+    category: 'arpejo',
+    level: 'intermediario',
+    bpm: 56,
+    meter: 4,
+    source: 'original',
+    description: 'Cadência menor em semicolcheias nas cordas 1 a 4, subindo e descendo duas vezes por compasso.',
+    tip: 'Comece a 50% do andamento. A dificuldade é trocar de desenho sem atrasar a primeira nota do compasso.',
+    build: arpeggio({ chords: ['Am', 'Dm', 'E', 'Am'], strings: 4 }),
+  },
+  {
+    id: 'arpejo-4-cordas-tetrades',
+    title: 'Tétrades nas 4 primeiras cordas: C7M – Dm7 – Em7 – F7M',
+    category: 'arpejo',
+    level: 'avancado',
+    bpm: 56,
+    meter: 4,
+    source: 'original',
+    description: 'Arpejos de acordes com sétima subindo o campo harmônico de Dó. Som de bossa e jazz.',
+    tip: 'Repare na diferença entre a 7ª maior (C7M, F7M) e a 7ª menor (Dm7, Em7).',
+    build: arpeggio({ chords: ['C7M', 'Dm7', 'Em7', 'F7M'], strings: 4 }),
+  },
+  {
+    id: 'arpejo-todas-cordas',
+    title: 'Arpejos em todas as cordas: C – Am – F – G',
+    category: 'arpejo',
+    level: 'intermediario',
+    bpm: 60,
+    meter: 4,
+    source: 'original',
+    description: 'Acordes abertos arpejados da corda mais grave à mais aguda e de volta, em tercinas. Só as cordas do acorde soam.',
+    tip: 'Monte o acorde inteiro antes de começar a arpejar e só troque no último tempo do compasso.',
+    build: arpeggio({ chords: ['C', 'Am', 'F', 'G'], strings: 'all' }),
+  },
+  {
+    id: 'arpejo-todas-cordas-menor',
+    title: 'Arpejos em todas as cordas: Am – Dm – G7 – C',
+    category: 'arpejo',
+    level: 'avancado',
+    bpm: 66,
+    meter: 4,
+    source: 'original',
+    description: 'Ciclo de quartas (ii–V–I com antecessor) arpejado em todas as cordas.',
+    build: arpeggio({ chords: ['Am', 'Dm', 'G7', 'C'], strings: 'all' }),
   },
 
   // -------------------------------------------------- Melodias em domínio público

@@ -28,6 +28,11 @@ export default function PrivacyPage() {
           identificador de cliente. Não recebemos nem guardamos número de cartão.
         </li>
         <li>
+          <strong>Dispositivos conectados:</strong> para aplicar o limite de 1 computador e 1 celular por conta, guardamos
+          o tipo do aparelho, um identificador aleatório gerado no navegador, o nome do navegador e sistema (ex.: “Chrome no
+          Windows”) e a hora do último acesso. Não usamos isso para rastrear você.
+        </li>
+        <li>
           <strong>Técnicos:</strong> registros de erro do servidor (sem conteúdo pessoal além do necessário para
           diagnóstico).
         </li>

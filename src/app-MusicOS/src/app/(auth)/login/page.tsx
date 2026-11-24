@@ -19,6 +19,7 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(params.get('error'));
+  const kicked = params.get('motivo') === 'outro-dispositivo';
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -58,6 +59,12 @@ function LoginForm() {
         </>
       }
     >
+      {kicked && !error && (
+        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2.5 text-sm text-amber-200">
+          Sua conta foi conectada em outro dispositivo do mesmo tipo, então esta sessão foi encerrada. Cada conta pode ficar
+          conectada em 1 computador e 1 celular ao mesmo tempo. Entre de novo para usar aqui (o outro aparelho será desconectado).
+        </div>
+      )}
       <FormError message={error} />
 
       <button type="button" onClick={handleGoogle} className="btn-secondary w-full py-3">

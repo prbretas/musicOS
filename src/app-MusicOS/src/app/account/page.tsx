@@ -13,6 +13,7 @@ import { createClient } from '@/lib/supabase/client';
 import { SiteHeader } from '@/components/layout/SiteHeader';
 import { SiteFooter } from '@/components/layout/SiteFooter';
 import { ProBadge } from '@/components/pro/ProBadge';
+import { DevicesPanel } from '@/components/account/DevicesPanel';
 
 function formatDate(d: Date | null): string {
   return d ? d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }) : '—';
@@ -243,6 +244,8 @@ function AccountInner() {
         </section>
 
         {/* Zona de perigo */}
+        <DevicesPanel />
+
         <section className="card p-6 border-red-500/30">
           <h2 className="font-bold text-white text-lg mb-2">Excluir conta</h2>
           <p className="text-sm text-slate-400 mb-4">

@@ -25,6 +25,11 @@ export default function TermsPage() {
       <ul>
         <li>Você é responsável por manter a confidencialidade da sua senha e por toda atividade na sua conta.</li>
         <li>Informe dados verdadeiros. Uma conta é pessoal e não pode ser compartilhada.</li>
+        <li>
+          Cada conta pode ficar conectada em até 1 computador e 1 celular ou tablet ao mesmo tempo. Ao entrar em um novo
+          aparelho do mesmo tipo, a sessão no aparelho anterior é encerrada automaticamente. Você pode ver e desconectar os
+          aparelhos em Minha conta.
+        </li>
         <li>É preciso ter 18 anos ou autorização de um responsável para contratar um plano pago.</li>
       </ul>
 

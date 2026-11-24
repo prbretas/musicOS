@@ -10,7 +10,10 @@ const tabOf = (id: string, inst: keyof typeof INSTRUMENTS = 'guitar') => {
   const ex = PRACTICE.find((p) => p.id === id)!;
   const def = INSTRUMENTS[inst];
   const tuning = def.tunings[0].pitches;
-  if (ex.build) return { ...ex.build(tuning, def.stringStartFret), shift: 0 };
+  if (ex.build) {
+    const built = ex.build(tuning, def.stringStartFret);
+    return built ? { ...built, shift: 0 } : null;
+  }
   const tab = computeTab(ex.notes!.map((n) => n.m), {
     tuning,
     stringStartFret: def.stringStartFret,
@@ -52,7 +55,7 @@ describe('catálogo de prática', () => {
 
   it('todo exercício fecha compassos inteiros (descontando a anacruse)', () => {
     for (const p of PRACTICE) {
-      const notes = p.build ? p.build(guitar).notes : p.notes!;
+      const notes = p.build ? p.build(guitar)!.notes : p.notes!;
       const beats = totalBeats(notes) - (p.pickup ?? 0);
       expect(beats % p.meter, `${p.id}: ${beats} tempos em ${p.meter}/4`).toBeCloseTo(0, 6);
     }

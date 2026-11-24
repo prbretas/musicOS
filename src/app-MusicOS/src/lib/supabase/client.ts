@@ -69,8 +69,12 @@ export async function updatePassword(password: string) {
   if (error) throw error;
 }
 
-export async function signOut() {
-  const { error } = await createClient().auth.signOut();
+/**
+ * Sai só deste dispositivo (padrão). 'global' encerra todas as sessões da conta.
+ * O padrão do Supabase é 'global', o que derrubaria também o celular ao sair no computador.
+ */
+export async function signOut(scope: 'local' | 'global' = 'local') {
+  const { error } = await createClient().auth.signOut({ scope });
   if (error) throw error;
 }
 

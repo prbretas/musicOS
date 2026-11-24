@@ -33,7 +33,9 @@ export function TabView({
   const n = tuning.length;
   const barsPerRow = meter <= 2 ? 4 : 2;
   const beatsPerRow = meter * barsPerRow;
-  const BEAT_W = 56;
+  // notas rápidas (semicolcheias, tercinas) ganham mais espaço por tempo
+  const minDur = notes.reduce((m, x) => (x.d > 0 ? Math.min(m, x.d) : m), 1);
+  const BEAT_W = Math.max(56, Math.ceil(22 / minDur));
   const LEFT = 30;
   const LINE_H = 16;
   const ROW_TOP = 14;
@@ -43,7 +45,8 @@ export function TabView({
   // posição de cada nota em tempos, contando a anacruse antes do 1º compasso
   const starts: number[] = [];
   notes.reduce((t, note) => {
-    starts.push(t);
+    // arredonda para não acumular erro de ponto flutuante nas tercinas
+    starts.push(Math.round(t * 1e6) / 1e6);
     return t + note.d;
   }, 0);
   const total = notes.reduce((t, x) => t + x.d, 0);

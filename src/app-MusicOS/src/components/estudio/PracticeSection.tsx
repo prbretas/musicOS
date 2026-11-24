@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Prática no instrumento: técnica, riffs e melodias com tablatura para tocar junto.
+ * Prática no instrumento: técnica, riffs, arpejos e melodias com tablatura para tocar junto.
  *
  * A tab é calculada para o instrumento e a afinação escolhidos. O player toca a
  * frase (ou só o metrônomo), com contagem, loop e andamento ajustável, e
@@ -68,6 +68,7 @@ export function PracticeSection({ instrument, tuning }: { instrument: Instrument
   const prepared = useMemo(() => {
     if (exercise.build) {
       const built = exercise.build(tuning, def.stringStartFret);
+      if (!built) return null;
       return { notes: built.notes, positions: built.positions, shift: 0 };
     }
     const notes = exercise.notes!;
@@ -104,7 +105,7 @@ export function PracticeSection({ instrument, tuning }: { instrument: Instrument
     for (let b = 0; b < Math.ceil(total - 1e-9); b++) events.push({ beat: b, kind: 'click', accent: (b + offset) % meter === 0 });
     let t = 0;
     prepared.notes.forEach((note, i) => {
-      if (note.m !== null) events.push({ beat: t, kind: 'note', i, midi: note.m + prepared.shift, dur: note.d });
+      if (note.m !== null) events.push({ beat: Math.round(t * 1e6) / 1e6, kind: 'note', i, midi: note.m + prepared.shift, dur: note.d });
       t += note.d;
     });
     events.sort((a, b) => a.beat - b.beat || (a.kind === 'click' ? -1 : 1));
