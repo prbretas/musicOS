@@ -13,6 +13,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { audioNow, scheduleClick } from '@/lib/audio/synth';
+import { useProFeature } from '@/components/pro/ProGate';
+import { ProBadge } from '@/components/pro/ProBadge';
+
+/** Compassos liberados no grátis */
+const FREE_METERS = new Set(['1/4', '2/4', '3/4', '4/4']);
 
 const TEMPOS: { label: string; range: string; bpm: number; tone: string }[] = [
   { label: 'Grave', range: '20–40', bpm: 35, tone: 'border-emerald-500' },
@@ -75,6 +80,7 @@ export function MetronomePanel() {
   const [playing, setPlaying] = useState(false);
   const [beat, setBeat] = useState(0);
   const taps = useRef<number[]>([]);
+  const metroPro = useProFeature('metronome-pro');
 
   const meter = METERS.find((m) => m.id === meterId) ?? METERS[3];
   // Compasso composto: pulso dividido em 3 (a subdivisão vira o grupo ternário)
@@ -221,21 +227,38 @@ export function MetronomePanel() {
       {/* Compasso, subdivisão, acento, volume */}
       <div className="grid grid-cols-2 gap-3">
         <label className="text-xs text-slate-400 space-y-1">
-          <span className="block">Compasso</span>
-          <select value={meterId} onChange={(e) => setMeterId(e.target.value)} className="w-full">
+          <span className="flex items-center gap-1.5">Compasso {!metroPro.allowed && <ProBadge />}</span>
+          <select
+            value={meterId}
+            onChange={(e) => {
+              if (!FREE_METERS.has(e.target.value) && !metroPro.gate()) return;
+              setMeterId(e.target.value);
+            }}
+            className="w-full"
+          >
             {METERS.map((m) => (
               <option key={m.id} value={m.id}>
                 {m.label}
+                {!FREE_METERS.has(m.id) && !metroPro.allowed ? '  ★ PRO' : ''}
               </option>
             ))}
           </select>
         </label>
         <label className="text-xs text-slate-400 space-y-1">
-          <span className="block">Subdivisão</span>
-          <select value={subdivision} onChange={(e) => setSubdivision(Number(e.target.value))} className="w-full">
+          <span className="flex items-center gap-1.5">Subdivisão {!metroPro.allowed && <ProBadge />}</span>
+          <select
+            value={subdivision}
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              if (v !== 1 && !metroPro.gate()) return;
+              setSubdivision(v);
+            }}
+            className="w-full"
+          >
             {SUBDIVISIONS.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.label}
+                {s.id !== 1 && !metroPro.allowed ? '  ★ PRO' : ''}
               </option>
             ))}
           </select>

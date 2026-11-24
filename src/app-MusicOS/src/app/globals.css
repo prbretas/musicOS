@@ -108,8 +108,20 @@
     @apply block text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1.5;
   }
 
+  /* Selo PRO: dourado sólido, para ser reconhecido de longe */
   .badge-pro {
-    @apply inline-flex items-center gap-1 rounded-md bg-pro-400/15 border border-pro-400/40 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-pro-300;
+    @apply inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-ink-900;
+    background: linear-gradient(135deg, #ffe3a3 0%, #f5b942 45%, #e0a024 100%);
+    box-shadow: 0 0 0 1px rgba(255, 208, 107, 0.6), 0 2px 10px -2px rgba(245, 185, 66, 0.55);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+  }
+  /* Palavra PRO no meio do texto */
+  .text-gold {
+    background: linear-gradient(135deg, #ffe3a3 0%, #f5b942 50%, #e0a024 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-weight: 800;
   }
 
   .link {

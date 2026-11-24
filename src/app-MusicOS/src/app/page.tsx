@@ -11,7 +11,7 @@
 import { useMemo, useState } from 'react';
 import { SCALES, SCALE_GROUP_LABELS, buildScale, harmonicField, type ScaleGroup } from '@/lib/music/escalas';
 import { isScaleFree } from '@/lib/features';
-import { INSTRUMENTS, INSTRUMENT_LABELS, INSTRUMENT_ORDER, FREE_INSTRUMENT, standardTuning, type InstrumentType } from '@/lib/music/tunings';
+import { INSTRUMENTS, INSTRUMENT_LABELS, INSTRUMENT_ORDER, isFreeInstrument, standardTuning, type InstrumentType } from '@/lib/music/tunings';
 import { SiteHeader } from '@/components/layout/SiteHeader';
 import { SiteFooter } from '@/components/layout/SiteFooter';
 import { Section } from '@/components/estudio/Section';
@@ -28,6 +28,7 @@ import { ScaleStructuresTable } from '@/components/estudio/ScaleStructuresTable'
 import { TunerPanel } from '@/components/estudio/TunerPanel';
 import { ExercisesSection } from '@/components/estudio/ExercisesSection';
 import { ExtendedChordsSection } from '@/components/estudio/ExtendedChordsSection';
+import { PracticeSection } from '@/components/estudio/PracticeSection';
 import { ProGate, useProFeature } from '@/components/pro/ProGate';
 import { ProBadge } from '@/components/pro/ProBadge';
 import { useUpgrade } from '@/components/pro/UpgradeProvider';
@@ -44,7 +45,8 @@ const NAV = [
   ['acordes', 'Acordes'],
   ['tetrades', 'Tétrades'],
   ['ciclo', 'Ciclo de Quintas'],
-  ['exercicios', 'Exercícios'],
+  ['pratica', 'Prática'],
+  ['exercicios', 'Treino auditivo'],
 ] as const;
 
 type Panel = 'metronomo' | 'estruturas' | 'afinador' | null;
@@ -82,7 +84,7 @@ export default function EstudioPage() {
   }
 
   function pickInstrument(value: InstrumentType) {
-    if (value !== FREE_INSTRUMENT && !instrumentsPro.gate()) return;
+    if (!isFreeInstrument(value) && !instrumentsPro.gate()) return;
     setInstrument(value);
     setTuning(standardTuning(value));
   }
@@ -117,7 +119,6 @@ export default function EstudioPage() {
                 className="px-3 py-1.5 rounded-md text-slate-400 hover:text-white hover:bg-ink-600 whitespace-nowrap transition-colors"
               >
                 {label}
-                {id === 'exercicios' && !entitlement.isPro && <ProBadge className="ml-1.5" />}
               </a>
             ))}
           </nav>
@@ -143,7 +144,7 @@ export default function EstudioPage() {
               {scales.map((s) => (
                 <option key={s.key} value={s.key}>
                   {s.label}
-                  {!isScaleFree(s.key) && !scalesPro.allowed ? ' · PRO' : ''}
+                  {!isScaleFree(s.key) && !scalesPro.allowed ? '  ★ PRO' : ''}
                 </option>
               ))}
             </optgroup>
@@ -157,7 +158,7 @@ export default function EstudioPage() {
           {INSTRUMENT_ORDER.map((id) => (
             <option key={id} value={id}>
               {INSTRUMENTS[id].emoji} {INSTRUMENTS[id].label}
-              {id !== FREE_INSTRUMENT && !instrumentsPro.allowed ? ' · PRO' : ''}
+              {!isFreeInstrument(id) && !instrumentsPro.allowed ? '  ★ PRO' : ''}
             </option>
           ))}
         </select>
@@ -184,9 +185,9 @@ export default function EstudioPage() {
         {!entitlement.isPro && (
           <div className="no-print flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-pro-400/30 bg-gradient-to-r from-pro-400/10 to-transparent px-5 py-4">
             <p className="text-sm text-slate-300">
-              <strong className="text-white">Modo grátis.</strong> Use escalas, acordes, braço e metrônomo à vontade.{' '}
+              <strong className="text-white">Modo grátis.</strong> Escalas essenciais, tríades, violão, cavaquinho e baixo, metrônomo e 3 exercícios de prática.{' '}
               <span className="text-slate-400">Os itens com selo</span> <ProBadge />{' '}
-              <span className="text-slate-400">fazem parte do Pro: todas as escalas, tétrades, CAGED, afinador e treino auditivo.</span>
+              <span className="text-slate-400">fazem parte do Pro: todas as escalas, tétrades, CAGED, 13 instrumentos, tablaturas, afinador e treino auditivo completo.</span>
             </p>
             <button onClick={() => openUpgrade()} className="btn-pro shrink-0">
               Conhecer o Pro
@@ -246,14 +247,21 @@ export default function EstudioPage() {
         </Section>
 
         <Section
+          id="pratica"
+          icon="🎸"
+          title={`Prática no instrumento — tablatura (${INSTRUMENT_LABELS[instrument]})`}
+          actions={!entitlement.isPro ? <span className="text-xs text-slate-400 inline-flex items-center gap-1.5">3 grátis · demais <ProBadge /></span> : undefined}
+        >
+          <PracticeSection instrument={instrument} tuning={tuning} />
+        </Section>
+
+        <Section
           id="exercicios"
           icon="🎧"
           title="Treino Auditivo"
-          actions={!entitlement.isPro ? <ProBadge /> : undefined}
+          actions={!entitlement.isPro ? <span className="text-xs text-slate-400 inline-flex items-center gap-1.5">Iniciante grátis · demais <ProBadge /></span> : undefined}
         >
-          <ProGate feature="exercises">
-            <ExercisesSection />
-          </ProGate>
+          <ExercisesSection />
         </Section>
       </main>
 

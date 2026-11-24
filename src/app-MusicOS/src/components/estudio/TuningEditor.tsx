@@ -61,7 +61,7 @@ export function TuningEditor({
             {def.tunings.map((t, i) => (
               <option key={t.id} value={t.id}>
                 {t.label}
-                {i > 0 && locked ? ' · PRO' : ''}
+                {i > 0 && locked ? '  ★ PRO' : ''}
               </option>
             ))}
             {!current && <option value="custom">Personalizada</option>}

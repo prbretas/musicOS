@@ -11,19 +11,17 @@ import { SiteFooter } from '@/components/layout/SiteFooter';
 import { ProBadge } from '@/components/pro/ProBadge';
 
 const COMPARISON: { feature: string; free: boolean | string; pro: boolean | string }[] = [
-  { feature: 'Escalas maior, menor, pentatônicas e blues', free: true, pro: true },
-  { feature: 'Modos gregos, menor harmônica/melódica, exóticas', free: false, pro: true },
+  { feature: 'Escalas', free: '6 essenciais', pro: 'Todas: modos, menores, exóticas' },
   { feature: 'Tabela de intervalos e notas da escala', free: true, pro: true },
-  { feature: 'Acordes', free: 'Tríades', pro: 'Tríades, tétrades e extensões' },
-  { feature: 'Diagramas de acordes com som', free: true, pro: true },
-  { feature: 'Braço da guitarra', free: 'Afinação padrão', pro: 'Todas as afinações' },
-  { feature: 'Outros instrumentos (baixo, viola caipira, cavaquinho, banjo...)', free: 'Violão/guitarra', pro: 'Todos' },
+  { feature: 'Acordes com diagrama e som', free: 'Tríades', pro: 'Tríades, tétrades e extensões' },
+  { feature: 'Instrumentos', free: 'Violão/guitarra, cavaquinho, baixo', pro: 'Todos os 13' },
+  { feature: 'Afinações', free: 'Padrão', pro: 'Todas + personalizada' },
   { feature: 'Desenhos CAGED (C, A, G, E, D)', free: false, pro: true },
-  { feature: 'Teclado virtual', free: true, pro: true },
-  { feature: 'Ciclo de quintas', free: true, pro: true },
-  { feature: 'Metrônomo', free: true, pro: true },
+  { feature: 'Teclado virtual e ciclo de quintas', free: true, pro: true },
+  { feature: 'Metrônomo', free: '2/4, 3/4, 4/4', pro: 'Completo, com subdivisões' },
+  { feature: 'Prática com tablatura', free: '3 exercícios', pro: 'Todos' },
+  { feature: 'Treino auditivo', free: 'Intervalos (iniciante)', pro: 'Completo + progresso e ranking' },
   { feature: 'Afinador com microfone', free: false, pro: true },
-  { feature: 'Treino auditivo (intervalos e acordes)', free: false, pro: true },
   { feature: 'Exportar e imprimir', free: false, pro: true },
   { feature: 'Sem anúncios', free: false, pro: true },
 ];
@@ -99,10 +97,10 @@ function PricingInner() {
         <div className="text-center max-w-2xl mx-auto mb-10">
           <span className="badge-pro text-xs px-2 py-1">Planos</span>
           <h1 className="text-4xl md:text-5xl font-black text-white font-display mt-4">
-            Estude de graça. <span className="text-pro-300">Evolua com o Pro.</span>
+            Estude de graça. <span className="text-gold">Evolua com o Pro.</span>
           </h1>
           <p className="text-lg text-slate-400 mt-4">
-            O essencial é grátis e sem cadastro. O Pro desbloqueia todas as escalas, tétrades, CAGED, afinador e treino auditivo.
+            O essencial é grátis e sem cadastro. O Pro desbloqueia todas as escalas, tétrades, CAGED, 13 instrumentos, prática com tablatura, afinador e treino auditivo completo.
           </p>
         </div>
 

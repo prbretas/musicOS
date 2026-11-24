@@ -25,7 +25,14 @@ export function midiToFreq(midi: number): number {
 export function playMidi(midi: number, duration = 0.8, when = 0, volume = 0.25): void {
   const ac = audio();
   if (!ac) return;
-  const t = ac.currentTime + when;
+  scheduleNote(midi, duration, ac.currentTime + when, volume);
+}
+
+/** Agenda uma nota num instante absoluto do relogio do AudioContext (ver audioNow). */
+export function scheduleNote(midi: number, duration: number, time: number, volume = 0.25): void {
+  const ac = audio();
+  if (!ac) return;
+  const t = time;
 
   const osc = ac.createOscillator();
   const osc2 = ac.createOscillator();

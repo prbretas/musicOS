@@ -1,14 +1,14 @@
 'use client';
 
 /**
- * Ranking dos exercícios: semana e mês, pódio do mês passado e prêmios.
+ * Ranking dos exercícios: semana e mês e pódio do mês passado (só visualização).
  * Mostra só primeiro nome + inicial. Cada usuário pode sair do ranking.
  */
 
 import { useCallback, useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/providers/AuthProvider';
-import { PLACE_MEDAL, REWARD_CENTS, REWARD_RULES, formatBRL } from '@/lib/ranking/rewards';
+import { PLACE_MEDAL } from '@/lib/ranking/medals';
 
 interface Row {
   rank: number;
@@ -70,18 +70,9 @@ export function RankingPanel() {
 
   return (
     <div className="card p-6 space-y-6">
-      {/* Prêmios */}
-      <div className="rounded-xl border border-pro-400/40 bg-gradient-to-r from-pro-400/10 to-transparent p-4">
-        <p className="font-bold text-white">🏆 Top 3 do mês ganham desconto na próxima mensalidade</p>
-        <p className="text-sm text-slate-300 mt-1">
-          {PLACE_MEDAL[1]} {formatBRL(REWARD_CENTS[1])} · {PLACE_MEDAL[2]} {formatBRL(REWARD_CENTS[2])} · {PLACE_MEDAL[3]}{' '}
-          {formatBRL(REWARD_CENTS[3])}
-        </p>
-        <p className="text-xs text-slate-500 mt-1">
-          Para concorrer: pelo menos {REWARD_RULES.minAnswers} respostas e {REWARD_RULES.minAccuracy}% de acerto no mês. Vitalícios
-          recebem o selo do pódio. Os prêmios são conferidos antes de aplicados.
-        </p>
-      </div>
+      <p className="text-sm text-slate-400">
+        Pontos por acerto nos exercícios valendo ranking. São precisas 10 respostas no período para aparecer.
+      </p>
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex rounded-lg overflow-hidden border border-ink-500 text-sm">

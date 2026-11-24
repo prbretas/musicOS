@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { RankingPanel } from './RankingPanel';
 import { ProgressPanel } from './ProgressPanel';
+import { ProGate, useProFeature } from '@/components/pro/ProGate';
 
 type Mode = 'intervals' | 'chords';
 type Level = 'beginner' | 'intermediate' | 'advanced';
@@ -121,6 +122,8 @@ function EarTrainer() {
   const [stats, setStats] = useState<Stats>({ correct: 0, total: 0, streak: 0, best: 0 });
   const [melodic, setMelodic] = useState(true);
   const { user, entitlement } = useAuth();
+  const fullPro = useProFeature('exercises');
+  const isFreeCombo = (m: Mode, l: Level) => m === 'intervals' && l === 'beginner';
   const [sessionPoints, setSessionPoints] = useState(0);
   const [scoreNote, setScoreNote] = useState<string | null>(null);
 
@@ -207,6 +210,8 @@ function EarTrainer() {
             <button
               key={m}
               onClick={() => {
+                // Grátis: só intervalos no nível iniciante
+                if (m === 'chords' && !fullPro.gate()) return;
                 setMode(m);
                 setAnswer(null);
                 setPicked(null);
@@ -214,6 +219,7 @@ function EarTrainer() {
               className={`px-4 py-2 font-semibold ${mode === m ? 'bg-brand-500 text-white' : 'bg-ink-700 text-slate-300 hover:bg-ink-600'}`}
             >
               {m === 'intervals' ? 'Intervalos' : 'Acordes'}
+              {m === 'chords' && !fullPro.allowed && <span className="ml-1.5 align-middle">★</span>}
             </button>
           ))}
         </div>
@@ -221,7 +227,9 @@ function EarTrainer() {
         <select
           value={level}
           onChange={(e) => {
-            setLevel(e.target.value as Level);
+            const next = e.target.value as Level;
+            if (!isFreeCombo(mode, next) && !fullPro.gate()) return;
+            setLevel(next);
             setAnswer(null);
             setPicked(null);
           }}
@@ -230,6 +238,7 @@ function EarTrainer() {
           {(Object.keys(LEVEL_LABELS) as Level[]).map((l) => (
             <option key={l} value={l}>
               {LEVEL_LABELS[l]}
+              {!isFreeCombo(mode, l) && !fullPro.allowed ? '  ★ PRO' : ''}
             </option>
           ))}
         </select>
@@ -344,8 +353,16 @@ export function ExercisesSection() {
         ))}
       </div>
       {tab === 'train' && <EarTrainer />}
-      {tab === 'progress' && <ProgressPanel />}
-      {tab === 'ranking' && <RankingPanel />}
+      {tab === 'progress' && (
+        <ProGate feature="exercises" title="Histórico de progresso">
+          <ProgressPanel />
+        </ProGate>
+      )}
+      {tab === 'ranking' && (
+        <ProGate feature="exercises" title="Ranking semanal e mensal">
+          <RankingPanel />
+        </ProGate>
+      )}
     </div>
   );
 }

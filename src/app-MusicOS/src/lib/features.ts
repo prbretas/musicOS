@@ -21,6 +21,8 @@ export type FeatureId =
   | 'exercises'
   | 'export'
   | 'metronome'
+  | 'metronome-pro'
+  | 'practice'
   | 'circle-of-fifths';
 
 export interface Feature {
@@ -77,10 +79,17 @@ export const FEATURES: Record<FeatureId, Feature> = {
   },
   exercises: {
     id: 'exercises',
-    label: 'Exercícios de treino auditivo',
-    description: 'Reconheça intervalos e acordes de ouvido, com pontuação e progresso.',
+    label: 'Treino auditivo completo',
+    description: 'Todos os níveis de intervalos e acordes, com pontuação, histórico de progresso e ranking. O nível iniciante de intervalos é grátis.',
     tier: 'pro',
   },
+  practice: {
+    id: 'practice',
+    label: 'Prática com tablatura',
+    description: 'Riffs, frases, técnica e melodias com tab para o seu instrumento e afinação, para tocar junto com andamento ajustável.',
+    tier: 'pro',
+  },
+
   export: {
     id: 'export',
     label: 'Exportar e imprimir',
@@ -90,9 +99,16 @@ export const FEATURES: Record<FeatureId, Feature> = {
   metronome: {
     id: 'metronome',
     label: 'Metrônomo',
-    description: 'Metrônomo preciso com acento no primeiro tempo.',
+    description: 'Metrônomo com acento, tap tempo e compassos 2/4, 3/4 e 4/4.',
     tier: 'free',
   },
+  'metronome-pro': {
+    id: 'metronome-pro',
+    label: 'Metrônomo completo',
+    description: 'Compassos compostos e irregulares (6/8, 7/8, 12/8...) e subdivisões em colcheia, tercina e semicolcheia.',
+    tier: 'pro',
+  },
+
   'circle-of-fifths': {
     id: 'circle-of-fifths',
     label: 'Ciclo de quintas',

@@ -41,6 +41,8 @@ export interface InstrumentDef {
   stringStartFret?: number[];
   /** Aceita acordes invertidos (banjo: o acorde aberto tem a 5ª no grave). Padrão: false */
   allowInversions?: boolean;
+  /** Família do baixo: exercícios de prática usam a oitava mais grave */
+  bass?: boolean;
   /** Observação curta exibida sob o braço */
   note?: string;
   /** A primeira afinação é a padrão do instrumento */
@@ -109,6 +111,7 @@ export const INSTRUMENTS: Record<InstrumentType, InstrumentDef> = {
   },
   bass4: {
     id: 'bass4',
+    bass: true,
     label: 'Baixo 4 cordas',
     emoji: '🎸',
     frets: 15,
@@ -123,6 +126,7 @@ export const INSTRUMENTS: Record<InstrumentType, InstrumentDef> = {
   },
   bass5: {
     id: 'bass5',
+    bass: true,
     label: 'Baixo 5 cordas',
     emoji: '🎸',
     frets: 15,
@@ -135,6 +139,7 @@ export const INSTRUMENTS: Record<InstrumentType, InstrumentDef> = {
   },
   bass6: {
     id: 'bass6',
+    bass: true,
     label: 'Baixo 6 cordas',
     emoji: '🎸',
     frets: 15,
@@ -235,8 +240,12 @@ export const INSTRUMENT_ORDER: InstrumentType[] = [
   'ukulele',
 ];
 
-/** Único instrumento liberado no modo grátis (na afinação padrão). */
-export const FREE_INSTRUMENT: InstrumentType = 'guitar';
+/** Instrumentos liberados no modo grátis (na afinação padrão). Os demais são Pro. */
+export const FREE_INSTRUMENTS: ReadonlySet<InstrumentType> = new Set<InstrumentType>(['guitar', 'cavaquinho', 'bass4']);
+
+export function isFreeInstrument(id: InstrumentType): boolean {
+  return FREE_INSTRUMENTS.has(id);
+}
 
 export const INSTRUMENT_LABELS: Record<InstrumentType, string> = Object.fromEntries(
   INSTRUMENT_ORDER.map((id) => [id, INSTRUMENTS[id].label])

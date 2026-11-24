@@ -1,5 +1,5 @@
 -- ============================================================
--- MusicOS — Migração v3: ranking dos exercícios e premiação
+-- MusicOS — Migração v3: ranking dos exercícios
 -- Execute no Supabase: SQL Editor → New Query → Run (idempotente)
 --
 -- Regras
@@ -8,7 +8,7 @@
 --  - Anti-abuso: mínimo de 1,2 s entre respostas, no máximo 400 respostas
 --    pontuadas por dia, uma resposta por vez por usuário (trava).
 --  - O ranking mostra só primeiro nome + inicial; quem desligar
---    "Aparecer no ranking" some dos rankings e da premiação.
+--    "Aparecer no ranking" some do ranking.
 -- ============================================================
 
 alter table public.profiles add column if not exists show_in_ranking boolean not null default true;
@@ -189,47 +189,8 @@ revoke execute on function public.my_exercise_stats() from anon, public;
 grant execute on function public.my_exercise_stats() to authenticated;
 
 -- ------------------------------------------------------------
--- Premiação mensal
+-- Premiação: removida (o ranking é só para visualização). Se rodou uma versão
+-- anterior desta migração, estas linhas limpam o que ela criou.
 -- ------------------------------------------------------------
-create table if not exists public.ranking_rewards (
-  id           bigserial primary key,
-  user_id      uuid not null references auth.users(id) on delete cascade,
-  period       text not null check (period ~ '^\d{4}-\d{2}$'),
-  place        int not null check (place between 1 and 3),
-  points       int not null,
-  amount_cents int not null,
-  status       text not null default 'pending'
-               check (status in ('pending', 'approved', 'applied', 'badge_only', 'rejected')),
-  stripe_coupon text,
-  note         text,
-  created_at   timestamptz not null default now(),
-  applied_at   timestamptz,
-  unique (period, place),
-  unique (period, user_id)
-);
-alter table public.ranking_rewards enable row level security;
-drop policy if exists "Users read own rewards" on public.ranking_rewards;
-create policy "Users read own rewards" on public.ranking_rewards
-  for select using (auth.uid() = user_id);
-
--- Vencedores de um mês (só o servidor chama). Exige 50+ respostas e 60%+ de acerto.
-create or replace function public.ranking_month_winners(p_period text)
-returns table (place int, user_id uuid, points int, answers int, accuracy int)
-language sql stable security definer set search_path = public as $$
-  with b as (select * from public.ranking_bounds(p_period)),
-  totals as (
-    select a.user_id, sum(a.points)::int as points, count(*)::int as answers,
-           round(100.0 * count(*) filter (where a.correct) / count(*))::int as accuracy,
-           max(a.created_at) as last_at
-    from public.exercise_attempts a, b
-    where a.created_at >= b.period_start and a.created_at < b.period_end
-    group by a.user_id
-  )
-  select row_number() over (order by t.points desc, t.accuracy desc, t.last_at asc)::int, t.user_id, t.points, t.answers, t.accuracy
-  from totals t join public.profiles p on p.id = t.user_id
-  where p.show_in_ranking and t.answers >= 50 and t.accuracy >= 60
-  order by 1
-  limit 3;
-$$;
-
-revoke execute on function public.ranking_month_winners(text) from anon, authenticated, public;
+drop function if exists public.ranking_month_winners(text);
+drop table if exists public.ranking_rewards;

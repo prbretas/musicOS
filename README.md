@@ -7,7 +7,7 @@
 | Plano | Preço | O que libera |
 | --- | --- | --- |
 | **Grátis** (sem cadastro) | R$ 0 | Escalas maior/menor/pentatônicas/blues, intervalos, acordes em tríades, braço do violão na afinação padrão, teclado, ciclo de quintas, metrônomo completo |
-| **Pro Mensal** | R$ 9,90/mês | Todas as escalas e modos, tétrades e extensões (7, 6, 9, add9, 6/9, sus), CAGED, 13 instrumentos (baixo, viola caipira, cavaquinho, banjo...), afinações alternativas e personalizadas, afinador, treino auditivo com ranking e prêmios, exportar |
+| **Pro Mensal** | R$ 9,90/mês | Todas as escalas e modos, tétrades e extensões (7, 6, 9, add9, 6/9, sus), CAGED, 13 instrumentos (baixo, viola caipira, cavaquinho, banjo...), afinações alternativas e personalizadas, afinador, treino auditivo com ranking, exportar |
 | **Pro Anual** | R$ 89/ano | Tudo do Pro, 25% mais barato |
 | **Vitalício** | R$ 197 único | Tudo do Pro, para sempre, com atualizações futuras |
 
@@ -39,7 +39,7 @@ No Windows, `INICIAR-MUSICOS.bat` faz o mesmo.
 ### 1. Supabase
 
 1. Crie um projeto e copie **URL**, **anon key** e **service_role key** para o `.env.local`.
-2. SQL Editor → rode, nesta ordem, `docs/supabase-migration-v2.sql` (perfis, cobrança, policies) e `docs/supabase-migration-v3-ranking.sql` (ranking dos exercícios e premiação).
+2. SQL Editor → rode, nesta ordem, `docs/supabase-migration-v2.sql` (perfis, cobrança, policies) e `docs/supabase-migration-v3-ranking.sql` (ranking dos exercícios).
 3. Authentication → URL Configuration: **Site URL** = sua URL pública; **Redirect URLs** = `https://SEU-DOMINIO/auth/callback` (e `http://localhost:3000/auth/callback` em dev).
 4. Para login com Google: Authentication → Providers → Google (crie as credenciais OAuth no Google Cloud com o redirect `https://SEU-PROJETO.supabase.co/auth/v1/callback`).
 
@@ -51,7 +51,6 @@ No Windows, `INICIAR-MUSICOS.bat` faz o mesmo.
 3. Settings → Billing → Customer portal: ative e permita cancelamento e troca de forma de pagamento.
 4. Em desenvolvimento: `stripe listen --forward-to localhost:3000/api/webhooks/stripe --all-snapshot`.
 5. Reconciliação diária: defina `CRON_SECRET` e agende `GET /api/cron/reconcile` com `Authorization: Bearer <CRON_SECRET>`. Ela corrige o banco se algum webhook se perder e mantém o e-mail do cliente atualizado no Stripe.
-6. Premiação mensal do ranking: agende `GET /api/cron/rewards` para o dia 1º de cada mês (mesmo cabeçalho do `CRON_SECRET`). Os 3 primeiros do mês anterior ficam com status `pending` em `ranking_rewards`; aprove mudando para `approved` no Supabase e chame a rota de novo para aplicar o desconto. Com `REWARDS_AUTO_APPLY=1` o desconto é aplicado direto.
 
 ## Rodando em container (Podman ou Docker)
 

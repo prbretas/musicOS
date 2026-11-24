@@ -54,39 +54,31 @@ export default function TermsPage() {
         </li>
       </ul>
 
-      <h2>5. Ranking e prêmios</h2>
-      <p>
-        Os três primeiros colocados do ranking mensal de exercícios, com pelo menos 50 respostas e 60% de acerto, podem
-        receber desconto na próxima mensalidade (1º R$ 9,90, 2º R$ 5,00, 3º R$ 3,00) ou o selo do pódio, no caso de planos
-        vitalícios. Os resultados são conferidos antes da concessão; pontuações obtidas com automação, scripts ou qualquer
-        forma de fraude são anuladas, e a conta pode ser suspensa. O prêmio não é convertido em dinheiro.
-      </p>
-
-      <h2>6. Uso aceitável</h2>
+      <h2>5. Uso aceitável</h2>
       <p>
         É proibido copiar, redistribuir, revender ou fazer engenharia reversa do Serviço, bem como usar meios automatizados
         para extrair seu conteúdo. Podemos suspender contas que violem estes Termos.
       </p>
 
-      <h2>7. Propriedade intelectual</h2>
+      <h2>6. Propriedade intelectual</h2>
       <p>
         O MusicOS, sua marca, código e conteúdo pertencem aos seus criadores. O conteúdo que você gera (por exemplo,
         pontuações de exercícios) é seu.
       </p>
 
-      <h2>8. Disponibilidade e responsabilidade</h2>
+      <h2>7. Disponibilidade e responsabilidade</h2>
       <p>
         Trabalhamos para manter o Serviço disponível, mas ele é fornecido &quot;como está&quot;. Não nos responsabilizamos
         por indisponibilidades, perda de dados locais do navegador ou por decisões tomadas com base no conteúdo educativo.
       </p>
 
-      <h2>9. Alterações</h2>
+      <h2>8. Alterações</h2>
       <p>
         Podemos atualizar estes Termos. Mudanças relevantes serão comunicadas no Serviço ou por e-mail. O uso continuado
         após a mudança significa aceitação.
       </p>
 
-      <h2>10. Contato</h2>
+      <h2>9. Contato</h2>
       <p>
         Dúvidas: <a href="mailto:suporte@musicos.app">suporte@musicos.app</a>. Veja também nossa{' '}
         <Link href="/privacy">Política de Privacidade</Link>.

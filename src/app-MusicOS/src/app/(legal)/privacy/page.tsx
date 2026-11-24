@@ -65,7 +65,7 @@ export default function PrivacyPage() {
       <p>
         Assinantes que fazem os exercícios aparecem no ranking semanal e mensal com o primeiro nome e a inicial do sobrenome,
         a pontuação e o percentual de acerto. E-mail e outros dados nunca são exibidos. Você pode sair do ranking a qualquer
-        momento desmarcando &quot;Aparecer no ranking&quot; na aba Ranking; quem sai também não concorre aos prêmios.
+        momento desmarcando &quot;Aparecer no ranking&quot; na aba Ranking.
       </p>
 
       <h2>6. Cookies</h2>
