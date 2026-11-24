@@ -19,7 +19,7 @@ test('trocar a escala atualiza o conteudo', async ({ page }) => {
 
 test('no braço, o G da corda 1 fica na casa 3 (regressão da casa vazia)', async ({ page }) => {
   await page.goto('/');
-  const svg = page.locator('#braco svg').first();
+  const svg = page.getByTestId('fretboard');
   await svg.scrollIntoViewIfNeeded();
 
   const pos = await svg.evaluate((el) => {

@@ -99,7 +99,7 @@ export function Fretboard({
 
   return (
     <div style={{ overflowX: 'auto' }}>
-      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: 'block', minWidth: W }}>
+      <svg data-testid="fretboard" width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: 'block', minWidth: W }}>
         {/* Marcadores de casa */}
         {MARKERS.filter((m) => m >= startFret && m <= endFret).map((m) => {
           const cx = midX(m);
