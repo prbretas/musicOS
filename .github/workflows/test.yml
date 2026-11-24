@@ -8,7 +8,7 @@ on:
     branches: [main]
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: '22'
   # Chaves do projeto Supabase de testes, cadastradas em Settings > Secrets and variables > Actions.
   # Sem os secrets, o build usa valores de exemplo (o app nao acessa o Supabase no build).
   NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://exemplo.supabase.co' }}
