@@ -354,7 +354,7 @@ export default function EstudioPage() {
 
             <label className="chip-select shrink-0">
               <span>Escala</span>
-              <select id="tipoEscala" value={scaleKey} onChange={(e) => pickScale(e.target.value)} className="max-w-[210px]">
+              <select id="tipoEscala" value={scaleKey} onChange={(e) => pickScale(e.target.value)} className="max-w-[190px]">
                 {groups.map(({ group, scales }) => (
                   <optgroup key={group} label={`— ${SCALE_GROUP_LABELS[group]} —`}>
                     {scales.map((s) => (
@@ -390,7 +390,7 @@ export default function EstudioPage() {
               className="tool-btn"
             >
               <IconMetronome width={18} height={18} />
-              <span className="hidden xl:inline">Metrônomo</span>
+              <span className="hidden 2xl:inline">Metrônomo</span>
             </button>
             <button
               onClick={() => togglePanel('afinador')}
@@ -400,8 +400,8 @@ export default function EstudioPage() {
               className="tool-btn"
             >
               <IconMic width={18} height={18} />
-              <span className="hidden xl:inline">Afinador</span>
-              {!tunerPro.allowed && <ProBadge className="hidden sm:inline-flex" />}
+              <span className="hidden 2xl:inline">Afinador</span>
+              {!tunerPro.allowed && <ProBadge className="hidden 2xl:inline-flex" />}
             </button>
             <button
               onClick={() => togglePanel('estruturas')}
@@ -411,7 +411,7 @@ export default function EstudioPage() {
               className="tool-btn hidden sm:inline-flex"
             >
               <IconBook width={18} height={18} />
-              <span className="hidden xl:inline">Estruturas</span>
+              <span className="hidden 2xl:inline">Estruturas</span>
             </button>
             <button onClick={handlePrint} aria-label="Exportar (imprimir ou PDF)" title="Imprimir ou salvar em PDF" className="tool-btn hidden sm:inline-flex">
               <IconPrint width={18} height={18} />

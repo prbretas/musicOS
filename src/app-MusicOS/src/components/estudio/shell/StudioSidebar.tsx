@@ -19,18 +19,18 @@ function SidebarContent({ view, onNavigate }: { view: ViewId; onNavigate: (v: Vi
   const { openUpgrade } = useUpgrade();
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="px-5 pt-5 pb-6">
+    <div className="flex h-full flex-col overflow-y-auto">
+      <div className="px-5 pt-5 pb-5">
         <Link href="/#escala" onClick={() => onNavigate('escala')} aria-label="MusicOS — início">
           <Logo animated />
         </Link>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-4 space-y-6" aria-label="Áreas do estúdio">
+      <nav className="px-4 space-y-5" aria-label="Áreas do estúdio">
         {VIEW_GROUPS.map((group) => (
           <div key={group.label}>
             <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">{group.label}</p>
-            <ul className="space-y-1">
+            <ul className="space-y-0.5">
               {group.views.map((v) => (
                 <li key={v.id}>
                   <a
@@ -65,7 +65,7 @@ function SidebarContent({ view, onNavigate }: { view: ViewId; onNavigate: (v: Vi
         ))}
       </nav>
 
-      <div className="p-4 space-y-3">
+      <div className="mt-auto p-4 pt-6 space-y-3">
         {entitlement.isPro ? (
           <div className="rounded-xl border border-pro-400/25 bg-gradient-to-br from-pro-400/10 to-transparent px-4 py-3 flex items-center gap-3">
             <IconCrown className="text-pro-300" />
@@ -80,15 +80,15 @@ function SidebarContent({ view, onNavigate }: { view: ViewId; onNavigate: (v: Vi
             className="group relative w-full overflow-hidden rounded-2xl p-[1px] text-left"
             style={{ background: 'linear-gradient(135deg, rgba(255,227,163,.8), rgba(109,93,252,.5), rgba(245,185,66,.8))' }}
           >
-            <span className="block rounded-[15px] bg-ink-900/95 px-4 py-4 transition-colors group-hover:bg-ink-900/80">
+            <span className="block rounded-[15px] bg-ink-900/95 px-4 py-3 transition-colors group-hover:bg-ink-900/80">
               <span className="flex items-center gap-2 text-sm font-bold text-white">
                 <IconSparkles className="text-pro-300" width={18} height={18} />
                 Desbloqueie o <span className="text-gold">PRO</span>
               </span>
-              <span className="mt-1 block text-xs text-slate-400">
-                Todas as escalas, 13 instrumentos, tétrades, CAGED, tablaturas e afinador.
+              <span className="mt-1 block text-xs leading-snug text-slate-400">
+                Todas as escalas, 13 instrumentos, tétrades, CAGED e afinador.
               </span>
-              <span className="btn-pro mt-3 w-full py-1.5 text-xs">Ver planos</span>
+              <span className="btn-pro mt-2.5 w-full py-1.5 text-xs">Ver planos</span>
             </span>
           </button>
         )}
