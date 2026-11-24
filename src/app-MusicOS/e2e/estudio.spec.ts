@@ -17,9 +17,11 @@ test('trocar a escala atualiza o conteudo', async ({ page }) => {
   await expect(page.getByRole('heading', { name: /Tabela de Intervalos - A Menor Natural/ })).toBeVisible();
 });
 
-test('navegação lateral: uma área por vez, com endereço próprio', async ({ page }) => {
+test('navegação: uma área por vez, com endereço próprio', async ({ page }, testInfo) => {
   await page.goto('/');
-  await page.getByRole('navigation', { name: 'Áreas do estúdio' }).getByRole('link', { name: /Acordes/ }).click();
+  // computador: barra lateral; celular: barra inferior
+  const nav = testInfo.project.name === 'celular' ? 'Atalhos' : 'Áreas do estúdio';
+  await page.getByRole('navigation', { name: nav }).getByRole('link', { name: /Acordes/ }).click();
   await expect(page).toHaveURL(/#acordes$/);
   await expect(page.getByRole('heading', { level: 1, name: /Acordes de C Maior/ })).toBeVisible();
   await expect(page.getByRole('heading', { name: /Tabela de Intervalos/ })).toHaveCount(0);

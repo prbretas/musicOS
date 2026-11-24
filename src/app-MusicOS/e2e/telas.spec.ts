@@ -7,7 +7,9 @@ import { test } from './support/fixtures';
 
 const AREAS = ['escala', 'campo', 'braco', 'acordes', 'teclado', 'pratica', 'treino', 'ciclo'];
 
-test('capturas — computador', async ({ page }) => {
+test('capturas — computador', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'só no projeto desktop');
+  test.setTimeout(180_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   for (const area of AREAS) {
     await page.goto(`/#${area}`);
@@ -16,8 +18,9 @@ test('capturas — computador', async ({ page }) => {
   }
 });
 
-test('capturas — celular', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+test('capturas — celular', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'celular', 'só no projeto celular');
+  test.setTimeout(120_000);
   for (const area of ['escala', 'braco', 'acordes']) {
     await page.goto(`/#${area}`);
     await page.waitForTimeout(900);
