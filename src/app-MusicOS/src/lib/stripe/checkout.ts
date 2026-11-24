@@ -4,6 +4,7 @@
  */
 
 import type { PaidPlanId } from '@/lib/plans';
+import { flush, track } from '@/lib/analytics/client';
 
 async function postJson<T>(url: string, body?: unknown): Promise<T> {
   const res = await fetch(url, {
@@ -18,6 +19,8 @@ async function postJson<T>(url: string, body?: unknown): Promise<T> {
 
 /** Cria a sessão de checkout do plano e leva o usuário ao Stripe. */
 export async function startCheckout(plan: PaidPlanId): Promise<void> {
+  track('checkout_start', { plan });
+  flush();
   const { url } = await postJson<{ url: string }>('/api/stripe/checkout', { plan });
   window.location.assign(url);
 }

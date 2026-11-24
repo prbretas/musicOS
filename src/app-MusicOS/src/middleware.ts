@@ -12,7 +12,7 @@ import { createServerClient } from '@supabase/ssr';
 import { publicOrigin } from '@/lib/http/origin';
 import { NextResponse, type NextRequest } from 'next/server';
 
-const PROTECTED_PREFIXES = ['/account', '/checkout', '/api/stripe/checkout', '/api/stripe/portal', '/api/billing', '/api/account'];
+const PROTECTED_PREFIXES = ['/admin', '/account', '/checkout', '/api/stripe/checkout', '/api/stripe/portal', '/api/billing', '/api/account'];
 const AUTH_PAGES = ['/login', '/signup', '/forgot-password'];
 
 function safeNext(value: string | null, fallback = '/'): string {

@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { Modal } from '@/components/ui/Modal';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { FEATURES, type FeatureId } from '@/lib/features';
+import { track } from '@/lib/analytics/client';
 import { PLANS, formatPrice, type PaidPlanId } from '@/lib/plans';
 import { checkoutPath, startCheckout } from '@/lib/stripe/checkout';
 
@@ -30,6 +31,9 @@ export function UpgradeProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
 
   const openUpgrade = useCallback((f?: FeatureId) => {
+    // recurso Pro clicado no modo grátis (paywall) ou botão "Seja Pro"
+    if (f) track('paywall', { feature: f });
+    else track('upgrade_open');
     setFeature(f ?? null);
     setOpen(true);
   }, []);

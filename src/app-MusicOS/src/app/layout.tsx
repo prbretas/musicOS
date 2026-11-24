@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/components/providers/AuthProvider';
 import { UpgradeProvider } from '@/components/pro/UpgradeProvider';
+import { AnalyticsProvider } from '@/components/providers/AnalyticsProvider';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </div>
         <AuthProvider>
           <UpgradeProvider>{children}</UpgradeProvider>
+          <AnalyticsProvider />
         </AuthProvider>
       </body>
     </html>

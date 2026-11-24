@@ -14,7 +14,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { SCALES, SCALE_GROUP_LABELS, buildScale, harmonicField, type ScaleGroup } from '@/lib/music/escalas';
 import { isScaleFree } from '@/lib/features';
-import { INSTRUMENTS, INSTRUMENT_LABELS, INSTRUMENT_ORDER, isFreeInstrument, standardTuning, type InstrumentType } from '@/lib/music/tunings';
+import { INSTRUMENTS, INSTRUMENT_LABELS, INSTRUMENT_ORDER, findTuning, isFreeInstrument, standardTuning, type InstrumentType } from '@/lib/music/tunings';
 import { SiteFooter } from '@/components/layout/SiteFooter';
 import { UserMenu } from '@/components/layout/UserMenu';
 import { LogoMark } from '@/components/ui/Logo';
@@ -42,6 +42,7 @@ import { ProGate, useProFeature } from '@/components/pro/ProGate';
 import { ProBadge } from '@/components/pro/ProBadge';
 import { useUpgrade } from '@/components/pro/UpgradeProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
+import { track } from '@/lib/analytics/client';
 import { IconArrowRight, IconBook, IconClose, IconMenu, IconMetronome, IconMic, IconPrint } from '@/components/ui/icons';
 
 const TONICS = ['C', 'C# / Db', 'D', 'D# / Eb', 'E', 'F', 'F# / Gb', 'G', 'G# / Ab', 'A', 'A# / Bb', 'B'];
@@ -103,6 +104,11 @@ export default function EstudioPage() {
     }
   }, []);
 
+  // área vista (entrada pelo endereço ou navegação)
+  useEffect(() => {
+    track('area_view', { area: view });
+  }, [view]);
+
   const navigate = useCallback((v: ViewId) => {
     setView(v);
     if (window.location.hash !== `#${v}`) window.history.pushState(null, '', `#${v}`);
@@ -112,13 +118,21 @@ export default function EstudioPage() {
   // ------------------------------------------------------------ ações
   function pickScale(key: string) {
     if (!isScaleFree(key) && !scalesPro.gate()) return;
+    if (key !== scaleKey) track('scale_change', { value: key });
     setScaleKey(key);
   }
 
   function pickInstrument(value: InstrumentType) {
     if (!isFreeInstrument(value) && !instrumentsPro.gate()) return;
+    track('instrument_change', { value });
     setInstrument(value);
     setTuning(standardTuning(value));
+  }
+
+  function changeTuning(next: string[]) {
+    setTuning(next);
+    const known = findTuning(instrument, next);
+    track('tuning_change', { value: `${instrument}: ${known ? known.label : next.join(' ')}`.slice(0, 60) });
   }
 
   function toggleTetrads(v: boolean) {
@@ -128,6 +142,7 @@ export default function EstudioPage() {
 
   function togglePanel(p: Exclude<Panel, null>) {
     if (p === 'afinador' && !tunerPro.gate()) return;
+    if (panel !== p) track('tool_open', { value: p });
     setPanel(panel === p ? null : p);
   }
 
@@ -225,7 +240,7 @@ export default function EstudioPage() {
               description="Notas da escala no braço, desenhos CAGED, pentatônica, acorde da tônica e afinações alternativas."
             />
             <section id="braco" className="scroll-mt-28">
-              <FretboardSection scale={scale} instrument={instrument} tuning={tuning} onTuningChange={setTuning} />
+              <FretboardSection scale={scale} instrument={instrument} tuning={tuning} onTuningChange={changeTuning} />
             </section>
           </>
         );

@@ -30,6 +30,8 @@ export interface Profile {
   cancel_at_period_end: boolean;
   /** Aparece no ranking dos exercícios (padrão true) */
   show_in_ranking?: boolean;
+  /** 'admin' libera o painel /admin (o usuário não consegue alterar esta coluna) */
+  role?: string | null;
   created_at: string;
   updated_at: string;
 }

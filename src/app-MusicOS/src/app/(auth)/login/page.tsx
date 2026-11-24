@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
+import { flush, track } from '@/lib/analytics/client';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { authErrorMessage, signIn, signInWithGoogle } from '@/lib/supabase/client';
 import { AuthShell, Divider, FormError, GoogleIcon } from '@/components/auth/AuthShell';
@@ -27,6 +28,7 @@ function LoginForm() {
     setError(null);
     try {
       await signIn(email.trim(), password);
+      track('login', { method: 'email' });
       router.replace(next);
       router.refresh();
     } catch (err) {
@@ -38,6 +40,8 @@ function LoginForm() {
   async function handleGoogle() {
     setError(null);
     try {
+      track('login', { method: 'google' });
+      flush();
       await signInWithGoogle(next);
     } catch (err) {
       setError(authErrorMessage(err));

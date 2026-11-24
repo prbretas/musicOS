@@ -33,6 +33,13 @@ export default function PrivacyPage() {
           Windows”) e a hora do último acesso. Não usamos isso para rastrear você.
         </li>
         <li>
+          <strong>Estatísticas de uso:</strong> para melhorar o app, registramos de forma anônima as páginas e áreas
+          visitadas, os botões clicados e os recursos procurados, junto com um identificador aleatório gerado no seu
+          navegador, o tipo de aparelho e a localização aproximada (país, estado e cidade) informada pela nossa
+          hospedagem. Não guardamos seu endereço IP. Se o seu navegador enviar o sinal “Não rastrear” ou Global
+          Privacy Control, nada disso é registrado. Esses dados são apagados após 13 meses.
+        </li>
+        <li>
           <strong>Técnicos:</strong> registros de erro do servidor (sem conteúdo pessoal além do necessário para
           diagnóstico).
         </li>

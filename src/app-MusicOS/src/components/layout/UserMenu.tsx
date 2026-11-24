@@ -62,7 +62,7 @@ export function UserMenu() {
   const name = profile?.name ?? user.user_metadata?.name ?? user.email ?? '';
 
   return (
-    <div className="flex items-center gap-2" ref={ref}>
+    <div className="flex items-center gap-2" ref={ref} data-no-track>
       {!entitlement.isPro && (
         <button onClick={() => openUpgrade()} className="btn-pro hidden sm:inline-flex">
           Seja Pro
@@ -101,6 +101,11 @@ export function UserMenu() {
             <Link href="/account" role="menuitem" onClick={() => setOpen(false)} className="block px-3 py-2 rounded-lg text-sm text-slate-200 hover:bg-ink-600">
               Minha conta
             </Link>
+            {profile?.role === 'admin' && (
+              <Link href="/admin" role="menuitem" onClick={() => setOpen(false)} className="block px-3 py-2 rounded-lg text-sm text-brand-200 hover:bg-ink-600">
+                📊 Painel do administrador
+              </Link>
+            )}
             {!entitlement.isPro && (
               <button
                 role="menuitem"

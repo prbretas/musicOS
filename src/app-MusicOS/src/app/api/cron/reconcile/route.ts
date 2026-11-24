@@ -12,6 +12,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { timingSafeEqual } from 'crypto';
 import { reconcileAll } from '@/lib/billing/reconcile';
 import { billingDeps } from '@/lib/billing/adapters';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -36,6 +37,9 @@ export async function GET(request: NextRequest) {
 
   try {
     const summary = await reconcileAll(billingDeps());
+    // retenção das métricas: apaga eventos com mais de 13 meses
+    const purge = await createAdminClient().rpc('purge_analytics');
+    if (purge.error) console.error('[analytics/purge]', purge.error.message);
     console.info('[billing/reconcile]', JSON.stringify({ ...summary, changes: summary.changes.length }));
     return NextResponse.json(summary, { status: summary.errors.length ? 207 : 200 });
   } catch (error) {

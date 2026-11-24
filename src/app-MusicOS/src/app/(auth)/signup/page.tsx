@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
+import { track } from '@/lib/analytics/client';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { authErrorMessage, signInWithGoogle, signUp } from '@/lib/supabase/client';
 import { AuthShell, Divider, FormError, GoogleIcon } from '@/components/auth/AuthShell';
@@ -42,6 +43,7 @@ function SignupForm() {
     setLoading(true);
     try {
       const data = await signUp(email.trim(), password, name.trim(), next);
+      track('signup', { method: 'email' });
       if (data.session) {
         // Confirmação de e-mail desligada no Supabase: já está logado
         router.replace(next);

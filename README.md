@@ -39,7 +39,7 @@ No Windows, `INICIAR-MUSICOS.bat` faz o mesmo.
 ### 1. Supabase
 
 1. Crie um projeto e copie **URL**, **anon key** e **service_role key** para o `.env.local`.
-2. SQL Editor → rode, nesta ordem, `docs/supabase-migration-v2.sql` (perfis, cobrança, policies), `docs/supabase-migration-v3-ranking.sql` (ranking dos exercícios) e `docs/supabase-migration-v4-devices.sql` (limite de 1 computador + 1 celular por conta).
+2. SQL Editor → rode, nesta ordem, `docs/supabase-migration-v2.sql` (perfis, cobrança, policies), `docs/supabase-migration-v3-ranking.sql` (ranking dos exercícios) , `docs/supabase-migration-v4-devices.sql` (limite de 1 computador + 1 celular por conta) e `docs/supabase-migration-v5-analytics.sql` (métricas e painel do administrador).
 3. Authentication → URL Configuration: **Site URL** = sua URL pública; **Redirect URLs** = `https://SEU-DOMINIO/auth/callback` (e `http://localhost:3000/auth/callback` em dev).
 4. Para login com Google: Authentication → Providers → Google (crie as credenciais OAuth no Google Cloud com o redirect `https://SEU-PROJETO.supabase.co/auth/v1/callback`).
 

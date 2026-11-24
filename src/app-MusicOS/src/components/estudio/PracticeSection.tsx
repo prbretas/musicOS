@@ -24,6 +24,7 @@ import { audioNow, scheduleClick, scheduleNote } from '@/lib/audio/synth';
 import { useProFeature } from '@/components/pro/ProGate';
 import { ProBadge } from '@/components/pro/ProBadge';
 import { TabView } from './TabView';
+import { track } from '@/lib/analytics/client';
 
 const LOOKAHEAD_MS = 25;
 const AHEAD_S = 0.12;
@@ -248,7 +249,10 @@ export function PracticeSection({ instrument, tuning }: { instrument: Instrument
         {/* Controles */}
         <div className="flex flex-wrap items-center gap-3">
           <button
-            onClick={() => setPlaying((p) => !p)}
+            onClick={() => {
+              if (!playing) track('practice_play', { value: exercise.id });
+              setPlaying((p) => !p);
+            }}
             disabled={!prepared}
             className={`px-6 py-2.5 rounded-lg font-semibold text-white disabled:opacity-40 ${
               playing ? 'bg-red-600 hover:bg-red-500' : 'bg-brand-500 hover:bg-brand-400'
