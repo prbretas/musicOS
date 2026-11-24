@@ -15,7 +15,7 @@ export type FeatureId =
   | 'scales-advanced'
   | 'tetrads'
   | 'caged'
-  | 'ukulele'
+  | 'instruments'
   | 'alt-tunings'
   | 'tuner'
   | 'exercises'
@@ -47,26 +47,26 @@ export const FEATURES: Record<FeatureId, Feature> = {
   },
   tetrads: {
     id: 'tetrads',
-    label: 'Campo harmônico com tétrades',
-    description: 'Acordes de sétima (maj7, m7, 7, m7b5) em todos os graus da escala.',
+    label: 'Tétrades e extensões',
+    description: 'Acordes com 7ª, 6ª, 9ª, add9, 6/9, sus2, sus4 e 7sus4 em todos os graus, com diagramas.',
     tier: 'pro',
   },
   caged: {
     id: 'caged',
     label: 'Desenhos CAGED',
-    description: 'As 5 formas do sistema CAGED mais as posições F e B, casa por casa no braço.',
+    description: 'As 5 formas do sistema CAGED (C, A, G, E, D), casa por casa no braço.',
     tier: 'pro',
   },
-  ukulele: {
-    id: 'ukulele',
-    label: 'Ukulele',
-    description: 'Braço do ukulele com escalas, intervalos e acordes.',
+  instruments: {
+    id: 'instruments',
+    label: 'Todos os instrumentos',
+    description: 'Baixo, violão de 7 cordas, guitarra de 7 e 8 cordas, viola caipira, cavaquinho, bandolim, banjo e ukulele.',
     tier: 'pro',
   },
   'alt-tunings': {
     id: 'alt-tunings',
     label: 'Afinações alternativas',
-    description: 'Drop D, DADGAD, Open G, meio tom abaixo e afinação personalizada.',
+    description: 'Drop D, Double Drop, DADGAD, open tunings, meio tom e um tom abaixo, ou monte a sua corda por corda.',
     tier: 'pro',
   },
   tuner: {

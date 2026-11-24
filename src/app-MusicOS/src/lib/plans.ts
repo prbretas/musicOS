@@ -59,9 +59,10 @@ export const PLANS: Record<PlanId, Plan> = {
     features: [
       'Tudo do Grátis',
       'Todas as escalas: modos gregos, menor harmônica e melódica, exóticas',
-      'Campo harmônico com tétrades (acordes de sétima)',
-      'Desenhos CAGED e as 7 posições no braço',
-      'Ukulele e afinações alternativas',
+      'Tétrades e extensões: 7, 6, 9, add9, 6/9, sus e 7sus4',
+      'Desenhos CAGED (C, A, G, E, D) no braço',
+      'Baixo, viola caipira, cavaquinho, banjo, bandolim, 7 e 8 cordas',
+      'Afinações alternativas e personalizadas, corda por corda',
       'Afinador com microfone',
       'Exercícios de treino auditivo com pontuação',
       'Exportar e imprimir diagramas',

@@ -13,8 +13,10 @@ import { useState } from 'react';
 import type { NoteName } from '@/types/music';
 
 interface FretboardProps {
-  instrument: 'guitar' | 'ukulele';
+  instrument?: string;
   tuning?: string[];
+  /** Casa onde cada corda começa (banjo: a 5ª corda começa na casa 5). Padrão: 0 */
+  stringStartFret?: number[];
   highlightedNotes?: NoteName[];
   scale?: { root: NoteName; type: string; notes: NoteName[] };
   startFret?: number;
@@ -58,6 +60,7 @@ export function Fretboard({
   fretWindows,
   focusNotes,
   chordNotes,
+  stringStartFret,
   onNoteClick,
 }: FretboardProps) {
   const [hovered, setHovered] = useState<string | null>(null);
@@ -136,7 +139,7 @@ export function Fretboard({
         {strings.map((_, s) => (
           <line
             key={s}
-            x1={PAD_LEFT}
+            x1={(stringStartFret?.[s] ?? 0) > 0 ? PAD_LEFT + ((stringStartFret?.[s] ?? 0) - firstCell) * FRET_W : PAD_LEFT}
             y1={stringY(rowOf(s))}
             x2={PAD_LEFT + nCells * FRET_W}
             y2={stringY(rowOf(s))}
@@ -173,13 +176,16 @@ export function Fretboard({
         {/* Notas */}
         {strings.map((pitch, s) => {
           const open = pitchToNote(pitch);
+          const start = stringStartFret?.[s] ?? 0;
           return Array.from({ length: nFrets }).map((_, i) => {
             const fret = startFret + i;
-            const note = noteAt(open, fret);
+            // corda curta: as casas antes do início dela não existem
+            if (start > 0 && fret > 0 && fret <= start) return null;
+            const note = noteAt(open, fret === 0 ? 0 : fret - start);
             const key = `${s}-${fret}`;
             const isHov = hovered === key;
 
-            const cx = fret === 0 ? OPEN_X : midX(fret);
+            const cx = fret === 0 ? (start > 0 ? midX(start) : OPEN_X) : midX(fret);
             const cy = stringY(rowOf(s));
 
             const degree = scaleNotes.indexOf(note);

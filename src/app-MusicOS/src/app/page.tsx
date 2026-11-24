@@ -11,7 +11,7 @@
 import { useMemo, useState } from 'react';
 import { SCALES, SCALE_GROUP_LABELS, buildScale, harmonicField, type ScaleGroup } from '@/lib/music/escalas';
 import { isScaleFree } from '@/lib/features';
-import { INSTRUMENT_LABELS, type InstrumentType } from '@/lib/music/tunings';
+import { INSTRUMENTS, INSTRUMENT_LABELS, INSTRUMENT_ORDER, FREE_INSTRUMENT, standardTuning, type InstrumentType } from '@/lib/music/tunings';
 import { SiteHeader } from '@/components/layout/SiteHeader';
 import { SiteFooter } from '@/components/layout/SiteFooter';
 import { Section } from '@/components/estudio/Section';
@@ -27,6 +27,7 @@ import { MetronomePanel } from '@/components/estudio/MetronomePanel';
 import { ScaleStructuresTable } from '@/components/estudio/ScaleStructuresTable';
 import { TunerPanel } from '@/components/estudio/TunerPanel';
 import { ExercisesSection } from '@/components/estudio/ExercisesSection';
+import { ExtendedChordsSection } from '@/components/estudio/ExtendedChordsSection';
 import { ProGate, useProFeature } from '@/components/pro/ProGate';
 import { ProBadge } from '@/components/pro/ProBadge';
 import { useUpgrade } from '@/components/pro/UpgradeProvider';
@@ -41,6 +42,7 @@ const NAV = [
   ['teclado', 'Teclado'],
   ['braco', 'Braço'],
   ['acordes', 'Acordes'],
+  ['tetrades', 'Tétrades'],
   ['ciclo', 'Ciclo de Quintas'],
   ['exercicios', 'Exercícios'],
 ] as const;
@@ -51,6 +53,7 @@ export default function EstudioPage() {
   const [rootPc, setRootPc] = useState(0);
   const [scaleKey, setScaleKey] = useState('maior');
   const [instrument, setInstrument] = useState<InstrumentType>('guitar');
+  const [tuning, setTuning] = useState<string[]>(standardTuning('guitar'));
   const [tetrads, setTetrads] = useState(false);
   const [panel, setPanel] = useState<Panel>(null);
 
@@ -58,13 +61,14 @@ export default function EstudioPage() {
   const { openUpgrade } = useUpgrade();
   const scalesPro = useProFeature('scales-advanced');
   const tetradsPro = useProFeature('tetrads');
-  const ukulelePro = useProFeature('ukulele');
+  const instrumentsPro = useProFeature('instruments');
   const tunerPro = useProFeature('tuner');
   const exportPro = useProFeature('export');
 
   const scale = useMemo(() => buildScale(rootPc, scaleKey), [rootPc, scaleKey]);
   const useTetrads = tetrads && tetradsPro.allowed;
   const field = useMemo(() => harmonicField(scale, useTetrads), [scale, useTetrads]);
+  const triadField = useMemo(() => harmonicField(scale, false), [scale]);
   const keyPc = scale.def.parentOffset !== undefined ? (rootPc + scale.def.parentOffset) % 12 : null;
 
   const groups = (Object.keys(SCALE_GROUP_LABELS) as ScaleGroup[]).map((g) => ({
@@ -78,8 +82,9 @@ export default function EstudioPage() {
   }
 
   function pickInstrument(value: InstrumentType) {
-    if (value === 'ukulele' && !ukulelePro.gate()) return;
+    if (value !== FREE_INSTRUMENT && !instrumentsPro.gate()) return;
     setInstrument(value);
+    setTuning(standardTuning(value));
   }
 
   function toggleTetrads(v: boolean) {
@@ -149,8 +154,12 @@ export default function EstudioPage() {
           Instrumento
         </label>
         <select id="instrumento" value={instrument} onChange={(e) => pickInstrument(e.target.value as InstrumentType)}>
-          <option value="guitar">🎸 {INSTRUMENT_LABELS.guitar}</option>
-          <option value="ukulele">🪕 {INSTRUMENT_LABELS.ukulele}{!ukulelePro.allowed ? ' · PRO' : ''}</option>
+          {INSTRUMENT_ORDER.map((id) => (
+            <option key={id} value={id}>
+              {INSTRUMENTS[id].emoji} {INSTRUMENTS[id].label}
+              {id !== FREE_INSTRUMENT && !instrumentsPro.allowed ? ' · PRO' : ''}
+            </option>
+          ))}
         </select>
 
         <div className="flex items-center gap-2 ml-auto no-print">
@@ -207,11 +216,22 @@ export default function EstudioPage() {
         </Section>
 
         <Section id="braco" icon="🎸" title={`Braço do Instrumento — ${INSTRUMENT_LABELS[instrument]}`}>
-          <FretboardSection scale={scale} instrument={instrument} />
+          <FretboardSection scale={scale} instrument={instrument} tuning={tuning} onTuningChange={setTuning} />
         </Section>
 
-        <Section id="acordes" icon="🎸" title={`Visualizador de Acordes — ${useTetrads ? 'tétrades' : 'tríades'}`}>
-          <ChordFieldViewer field={field} />
+        <Section id="acordes" icon="🎸" title={`Visualizador de Acordes — tríades (${INSTRUMENT_LABELS[instrument]})`}>
+          <ChordFieldViewer field={triadField} instrument={instrument} tuning={tuning} />
+        </Section>
+
+        <Section
+          id="tetrades"
+          icon="🎼"
+          title="Tétrades e extensões"
+          actions={!tetradsPro.allowed ? <ProBadge /> : undefined}
+        >
+          <ProGate feature="tetrads">
+            <ExtendedChordsSection scale={scale} instrument={instrument} tuning={tuning} />
+          </ProGate>
         </Section>
 
         <Section id="ciclo" icon="⭕" title="Ciclo de Quintas">
@@ -257,7 +277,7 @@ export default function EstudioPage() {
       )}
       {panel === 'afinador' && (
         <FloatingPanel title="🎤 Afinador" onClose={() => setPanel(null)}>
-          <TunerPanel />
+          <TunerPanel instrument={instrument} tuning={tuning} />
         </FloatingPanel>
       )}
     </div>

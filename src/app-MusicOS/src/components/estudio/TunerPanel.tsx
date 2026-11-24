@@ -9,7 +9,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { TUNINGS, type InstrumentType } from '@/lib/music/tunings';
+import { INSTRUMENTS, findTuning, type InstrumentType } from '@/lib/music/tunings';
 import { playMidi } from '@/lib/audio/synth';
 
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -82,9 +82,8 @@ function autoCorrelate(buf: Float32Array, sampleRate: number): number {
 
 type Status = 'idle' | 'starting' | 'listening' | 'denied' | 'unsupported';
 
-export function TunerPanel() {
+export function TunerPanel({ instrument, tuning }: { instrument: InstrumentType; tuning: string[] }) {
   const [status, setStatus] = useState<Status>('idle');
-  const [instrument, setInstrument] = useState<InstrumentType>('guitar');
   const [freq, setFreq] = useState<number | null>(null);
 
   const ctxRef = useRef<AudioContext | null>(null);
@@ -155,15 +154,18 @@ export function TunerPanel() {
   const inTune = cents !== null && Math.abs(cents) <= 5;
   const needle = cents !== null ? Math.max(-50, Math.min(50, cents)) : 0;
 
-  const strings = TUNINGS[instrument][0].pitches;
+  const strings = tuning;
+  const tuningName = findTuning(instrument, tuning)?.label ?? 'Afinação personalizada';
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between gap-3">
-        <select value={instrument} onChange={(e) => setInstrument(e.target.value as InstrumentType)} aria-label="Instrumento">
-          <option value="guitar">🎸 Guitarra / Violão</option>
-          <option value="ukulele">🪕 Ukulele</option>
-        </select>
+        <div className="text-sm">
+          <p className="text-white font-semibold">
+            {INSTRUMENTS[instrument].emoji} {INSTRUMENTS[instrument].label}
+          </p>
+          <p className="text-xs text-slate-400">{tuningName}</p>
+        </div>
         {status === 'listening' ? (
           <button onClick={stop} className="btn-secondary">
             Parar

@@ -1,9 +1,9 @@
 'use client';
 
 /**
- * Braço do instrumento com a escala colorida, desenhos CAGED (+ F e B),
- * filtro de pentatônica, destaque do acorde da tônica e afinações.
- * A tônica e a escala vêm do seletor do topo da página.
+ * Braço do instrumento com a escala colorida, desenhos CAGED,
+ * filtro de pentatônica, destaque do acorde da tônica e editor de afinação.
+ * A tônica, a escala, o instrumento e a afinação vêm da página.
  *
  * Pro: desenhos CAGED e afinações alternativas.
  */
@@ -23,33 +23,42 @@ import {
   type CagedShape,
 } from '@/lib/music/caged';
 import { noteNameIn, pc, type BuiltScale } from '@/lib/music/escalas';
-import { TUNINGS, getTuning, type InstrumentType } from '@/lib/music/tunings';
+import { INSTRUMENTS, isStandardTuning, type InstrumentType } from '@/lib/music/tunings';
 import { useProFeature } from '@/components/pro/ProGate';
 import { ProBadge } from '@/components/pro/ProBadge';
+import { TuningEditor } from './TuningEditor';
 
 export type { InstrumentType } from '@/lib/music/tunings';
 
-const MAX_FRET = 15;
-
-export function FretboardSection({ scale, instrument }: { scale: BuiltScale; instrument: InstrumentType }) {
+export function FretboardSection({
+  scale,
+  instrument,
+  tuning,
+  onTuningChange,
+}: {
+  scale: BuiltScale;
+  instrument: InstrumentType;
+  tuning: string[];
+  onTuningChange: (pitches: string[]) => void;
+}) {
   const [caged, setCaged] = useState<CagedShape | null>(null);
   const [intervals, setIntervals] = useState(false);
   const [penta, setPenta] = useState(false);
   const [chord, setChord] = useState(false);
-  const [tuningId, setTuningId] = useState('standard');
 
   const cagedPro = useProFeature('caged');
   const tuningsPro = useProFeature('alt-tunings');
 
-  const tuning = getTuning(instrument, tuningId);
-  const isStandard = Boolean(tuning.standard);
+  const def = INSTRUMENTS[instrument];
+  const maxFret = def.frets;
+  const isStandard = isStandardTuning(instrument, tuning);
 
   const root = scale.sharpNotes[0] as TheoryNote;
   const notes = scale.sharpNotes as TheoryNote[];
   const scaleKey = scale.def.key;
 
   const cagedEnabled = instrument === 'guitar' && isStandard && hasCagedShapes(scaleKey);
-  const cagedWindows = getCagedWindows(root, scaleKey, MAX_FRET);
+  const cagedWindows = getCagedWindows(root, scaleKey, maxFret);
   const cagedKey = getCagedKey(root, scaleKey);
   const pentaNotes = getPentatonicNotes(root, notes);
   const triad = getTonicTriad(root, notes);
@@ -71,15 +80,17 @@ export function FretboardSection({ scale, instrument }: { scale: BuiltScale; ins
     setCaged(shape);
   }
 
-  function pickTuning(id: string) {
-    const t = getTuning(instrument, id);
-    if (!t.standard && !tuningsPro.gate()) return;
-    setTuningId(id);
-    if (!t.standard) setCaged(null);
+  function changeTuning(pitches: string[]) {
+    // Voltar ao padrão é sempre permitido; qualquer outra afinação é Pro
+    if (!isStandardTuning(instrument, pitches) && !tuningsPro.gate()) return;
+    onTuningChange(pitches);
+    if (!isStandardTuning(instrument, pitches)) setCaged(null);
   }
 
   return (
     <div className="card p-6 space-y-6">
+      <TuningEditor instrument={instrument} tuning={tuning} onChange={changeTuning} locked={!tuningsPro.allowed} />
+
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
         <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
           <input type="checkbox" checked={intervals} onChange={(e) => setIntervals(e.target.checked)} />
@@ -97,21 +108,6 @@ export function FretboardSection({ scale, instrument }: { scale: BuiltScale; ins
           Destacar acorde
           {triad ? ` ${scale.root}${triad.name.slice(triad.notes[0].length)} (${triad.notes.map((n) => noteNameIn(scale, pc(n))).join(' ')})` : ''}
         </label>
-
-        <label className="flex items-center gap-2 text-sm text-slate-300 ml-auto">
-          <span className="inline-flex items-center gap-1.5">
-            Afinação
-            {!tuningsPro.allowed && <ProBadge />}
-          </span>
-          <select value={tuning.id} onChange={(e) => pickTuning(e.target.value)} aria-label="Afinação">
-            {TUNINGS[instrument].map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.label}
-                {!t.standard && !tuningsPro.allowed ? ' · PRO' : ''}
-              </option>
-            ))}
-          </select>
-        </label>
       </div>
 
       <div>
@@ -120,7 +116,7 @@ export function FretboardSection({ scale, instrument }: { scale: BuiltScale; ins
           {!cagedPro.allowed && <ProBadge />}
           <span>
             {instrument !== 'guitar'
-              ? '(disponível só para guitarra)'
+              ? '(disponível para violão/guitarra de 6 cordas)'
               : !isStandard
                 ? '(só na afinação padrão)'
                 : !hasCagedShapes(scaleKey)
@@ -150,23 +146,24 @@ export function FretboardSection({ scale, instrument }: { scale: BuiltScale; ins
               : `Desenhos calculados na tonalidade de ${keyName} maior${
                   pc(cagedKey) !== pc(scale.root) ? ` (relativa de ${scale.root} ${scale.def.label})` : ''
                 }.`}
-            {caged && ` Forma ${formName(caged)}: casas ${cagedWindows[caged].map(([a, b]) => `${a}–${b}`).join(' e ')}.`} As formas{' '}
-            {formName('F')} e {formName('B')} completam as 7 posições da escala; não fazem parte do CAGED tradicional.
+            {caged && ` Forma ${formName(caged)}: casas ${cagedWindows[caged].map(([a, b]) => `${a}–${b}`).join(' e ')}.`}
           </p>
         )}
       </div>
 
       <Fretboard
         instrument={instrument}
-        tuning={tuning.pitches}
+        tuning={tuning}
+        stringStartFret={def.stringStartFret}
         startFret={0}
-        endFret={MAX_FRET}
+        endFret={maxFret}
         scale={{ root: root as NoteName, type: scaleKey, notes: notes as NoteName[] }}
         fretWindows={shownWindows}
         showIntervals={intervals}
         focusNotes={pentaActive ? (pentaNotes as NoteName[]) : undefined}
         chordNotes={chordActive ? (triad!.notes as NoteName[]) : undefined}
       />
+      {def.note && <p className="text-xs text-slate-500 -mt-3">{def.note}</p>}
 
       <div className="flex flex-wrap gap-3 items-center">
         <span className="text-slate-400 text-sm">Notas da escala:</span>
