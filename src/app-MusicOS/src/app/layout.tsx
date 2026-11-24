@@ -1,11 +1,7 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, Sora } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/components/providers/AuthProvider';
 import { UpgradeProvider } from '@/components/pro/UpgradeProvider';
-
-const inter = Inter({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
-const sora = Sora({ subsets: ['latin'], weight: ['600', '700', '800'], variable: '--font-display', display: 'swap' });
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 
@@ -37,7 +33,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className={`dark ${inter.variable} ${sora.variable}`}>
+    <html lang="pt-BR" className="dark">
       <body className="min-h-screen">
         <AuthProvider>
           <UpgradeProvider>{children}</UpgradeProvider>

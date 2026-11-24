@@ -7,6 +7,11 @@
    ------------------------------------------------------------------ */
 @layer base {
   :root {
+    /* Fontes do sistema: nenhum download no build (funciona atrás de proxy/offline).
+       Para usar Inter/Sora, coloque os .woff2 em public/fonts e use next/font/local. */
+    --font-sans: 'Inter', 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-display: 'Sora', 'Segoe UI Variable Display', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+
     --background: 228 24% 6%;
     --foreground: 220 20% 94%;
     --card: 226 22% 9%;
