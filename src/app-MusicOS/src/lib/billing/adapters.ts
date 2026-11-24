@@ -106,12 +106,15 @@ export function stripeGateway(stripe: Stripe = getStripe()): StripeGateway {
       for (const session of purchases) {
         const piId = typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id;
         if (!piId) continue;
-        const pi = await stripe.paymentIntents.retrieve(piId, { expand: ['latest_charge.dispute'] });
+        const pi = await stripe.paymentIntents.retrieve(piId, { expand: ['latest_charge'] });
         const charge = pi.latest_charge as Stripe.Charge | null;
-        if (!charge) continue;
-        const dispute = charge.dispute as Stripe.Dispute | string | null;
-        const disputeLost = charge.disputed && !(typeof dispute === 'object' && dispute?.status === 'won');
-        if (!charge.refunded && !disputeLost) return 'valid';
+        if (!charge || charge.refunded) continue;
+        if (charge.disputed) {
+          // Contestação só invalida se não foi ganha
+          const { data: disputes } = await stripe.disputes.list({ charge: charge.id, limit: 10 });
+          if (!disputes.some((d) => d.status === 'won')) continue;
+        }
+        return 'valid';
       }
       return 'revoked';
     },
