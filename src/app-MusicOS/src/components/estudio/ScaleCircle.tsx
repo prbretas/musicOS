@@ -34,8 +34,39 @@ export function ScaleCircle({ rootPc, scaleKey }: { rootPc: number; scaleKey: st
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} role="img" aria-label="Círculo de escalas">
-        <polygon points={poly(scale.sharpNotes.map(pc))} fill="#3b82f6" fillOpacity={0.18} stroke="#60a5fa" strokeWidth={2} />
+      <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} role="img" aria-label="Círculo de escalas" className="overflow-visible">
+        <defs>
+          <linearGradient id="scale-poly" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#a99dff" stopOpacity={0.45} />
+            <stop offset="1" stopColor="#5a48e6" stopOpacity={0.12} />
+          </linearGradient>
+          <radialGradient id="scale-node" cx="0.35" cy="0.3" r="0.8">
+            <stop offset="0" stopColor="#a99dff" />
+            <stop offset="1" stopColor="#5a48e6" />
+          </radialGradient>
+          <radialGradient id="scale-root" cx="0.35" cy="0.3" r="0.8">
+            <stop offset="0" stopColor="#ffe3a3" />
+            <stop offset="1" stopColor="#e0a024" />
+          </radialGradient>
+          <filter id="scale-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="4" result="b" />
+            <feMerge>
+              <feMergeNode in="b" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+        <circle cx={C} cy={C} r={R} fill="none" stroke="rgba(255,255,255,.06)" strokeWidth={1} />
+        <circle cx={C} cy={C} r={R - 40} fill="none" stroke="rgba(255,255,255,.04)" strokeDasharray="2 6" />
+        <polygon
+          points={poly(scale.sharpNotes.map(pc))}
+          fill="url(#scale-poly)"
+          stroke="#8a79ff"
+          strokeWidth={2}
+          strokeLinejoin="round"
+          filter="url(#scale-glow)"
+          style={{ transition: 'all .5s cubic-bezier(.2,.8,.2,1)' }}
+        />
         {compare && (
           <polygon
             points={poly(compare.sharpNotes.map(pc))}
@@ -57,10 +88,10 @@ export function ScaleCircle({ rootPc, scaleKey }: { rootPc: number; scaleKey: st
                 cx={x}
                 cy={y}
                 r={17}
-                fill={isRoot ? '#ef4444' : a ? '#3b82f6' : '#e5e7eb'}
-                stroke={b ? '#fb923c' : '#6b7280'}
+                fill={isRoot ? 'url(#scale-root)' : a ? 'url(#scale-node)' : '#181c26'}
+                stroke={b ? '#fb923c' : isRoot ? '#ffe3a3' : a ? '#c9c2ff' : 'rgba(255,255,255,.12)'}
                 strokeWidth={b ? 3 : 1.5}
-                fillOpacity={a || isRoot ? 1 : 0.85}
+                filter={isRoot ? 'url(#scale-glow)' : undefined}
               />
               <text
                 x={x}
@@ -68,7 +99,7 @@ export function ScaleCircle({ rootPc, scaleKey }: { rootPc: number; scaleKey: st
                 textAnchor="middle"
                 fontSize={11}
                 fontWeight="bold"
-                fill={a || isRoot ? '#ffffff' : '#9ca3af'}
+                fill={isRoot ? '#1a1206' : a ? '#ffffff' : '#64748b'}
               >
                 {noteNameIn(scale, p)}
               </text>
@@ -85,7 +116,7 @@ export function ScaleCircle({ rootPc, scaleKey }: { rootPc: number; scaleKey: st
           id="compareScale"
           value={compareKey ?? ''}
           onChange={(e) => setCompareKey(e.target.value || null)}
-          className="bg-ink-600 border border-ink-500 text-white rounded-lg px-2 py-1.5"
+          className="py-1.5"
         >
           <option value="">— nenhuma —</option>
           {SCALES.filter((s) => s.key !== scaleKey).map((s) => (

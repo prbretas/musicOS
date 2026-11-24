@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-/** Bloco de secao no estilo do MusicPages: titulo com icone e cartao escuro. */
+/** Bloco de conteúdo dentro de uma área: título com ícone e ações à direita. */
 export function Section({
   id,
   icon,
@@ -9,16 +9,18 @@ export function Section({
   children,
 }: {
   id: string;
-  icon: string;
+  icon: ReactNode;
   title: string;
   actions?: ReactNode;
   children: ReactNode;
 }) {
   return (
-    <section id={id} className="scroll-mt-36">
-      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-ink-600 pb-2 mb-4">
-        <h2 className="text-xl md:text-2xl font-bold text-slate-100 font-display">
-          <span className="mr-2">{icon}</span>
+    <section id={id} className="scroll-mt-28">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <h2 className="flex items-center gap-3 text-lg md:text-xl font-bold text-slate-100 font-display">
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-white/[0.05] border border-white/[0.07] text-base text-brand-200">
+            {icon}
+          </span>
           {title}
         </h2>
         {actions}

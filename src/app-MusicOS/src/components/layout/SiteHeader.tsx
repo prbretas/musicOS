@@ -9,11 +9,11 @@ import { UserMenu } from './UserMenu';
 
 export function SiteHeader({ children, nav }: { children?: ReactNode; nav?: ReactNode }) {
   return (
-    <header className="sticky top-0 z-40 bg-ink-900/85 backdrop-blur-md border-b border-ink-600">
+    <header className="glass sticky top-0 z-40 border-b">
       <div className="max-w-7xl mx-auto px-4">
         <div className="h-16 flex items-center gap-4">
           <Link href="/" className="shrink-0" aria-label="MusicOS — início">
-            <Logo />
+            <Logo animated />
           </Link>
 
           <nav className="hidden lg:flex items-center gap-1 ml-2 text-sm">

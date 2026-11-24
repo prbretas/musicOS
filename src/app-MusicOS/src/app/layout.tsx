@@ -35,6 +35,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR" className="dark">
       <body className="min-h-screen">
+        {/* Fundo animado (aurora) atrás de todas as páginas */}
+        <div className="aurora no-print" aria-hidden="true">
+          <span className="aurora-blob aurora-1" />
+          <span className="aurora-blob aurora-2" />
+          <span className="aurora-blob aurora-3" />
+          <span className="aurora-grid" />
+        </div>
         <AuthProvider>
           <UpgradeProvider>{children}</UpgradeProvider>
         </AuthProvider>

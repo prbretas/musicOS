@@ -17,8 +17,19 @@ test('trocar a escala atualiza o conteudo', async ({ page }) => {
   await expect(page.getByRole('heading', { name: /Tabela de Intervalos - A Menor Natural/ })).toBeVisible();
 });
 
-test('no braço, o G da corda 1 fica na casa 3 (regressão da casa vazia)', async ({ page }) => {
+test('navegação lateral: uma área por vez, com endereço próprio', async ({ page }) => {
   await page.goto('/');
+  await page.getByRole('navigation', { name: 'Áreas do estúdio' }).getByRole('link', { name: /Acordes/ }).click();
+  await expect(page).toHaveURL(/#acordes$/);
+  await expect(page.getByRole('heading', { level: 1, name: /Acordes de C Maior/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Tabela de Intervalos/ })).toHaveCount(0);
+  // endereço antigo da página única continua funcionando
+  await page.goto('/#tetrades');
+  await expect(page.getByRole('tab', { name: /Tétrades e extensões/ })).toBeVisible();
+});
+
+test('no braço, o G da corda 1 fica na casa 3 (regressão da casa vazia)', async ({ page }) => {
+  await page.goto('/#braco');
   const svg = page.getByTestId('fretboard');
   await svg.scrollIntoViewIfNeeded();
 

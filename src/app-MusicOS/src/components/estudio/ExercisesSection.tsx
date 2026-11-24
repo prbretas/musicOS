@@ -339,17 +339,9 @@ export function ExercisesSection() {
   ];
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Exercícios">
+      <div className="seg" role="tablist" aria-label="Exercícios">
         {tabs.map((t) => (
-          <button
-            key={t.id}
-            role="tab"
-            aria-selected={tab === t.id}
-            onClick={() => setTab(t.id)}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-              tab === t.id ? 'bg-brand-500 text-white' : 'bg-ink-600 text-slate-300 hover:bg-ink-500'
-            }`}
-          >
+          <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)} className="seg-item">
             {t.label}
           </button>
         ))}
