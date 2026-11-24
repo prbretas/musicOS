@@ -109,4 +109,6 @@ src/app-MusicOS/src
 
 ## Licença
 
-Projeto privado. Todos os direitos reservados.
+**Software proprietário — todos os direitos reservados.** Este código não é open source e não é distribuído a clientes.
+Os planos (inclusive o Vitalício) dão direito de **acesso ao serviço** pela plataforma, com login; nenhum plano inclui código-fonte,
+download ou instalação do software. O acesso vitalício é controlado pelo Stripe + Supabase (`subscription_tier = 'lifetime'`).

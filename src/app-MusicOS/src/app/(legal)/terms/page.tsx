@@ -35,8 +35,12 @@ export default function TermsPage() {
           preço vigente, até que você cancele.
         </li>
         <li>
-          <strong>Vitalício</strong> é um pagamento único que dá acesso aos recursos Pro enquanto o Serviço existir,
-          incluindo atualizações futuras.
+          <strong>Vitalício</strong> é um pagamento único que dá acesso aos recursos Pro, pela plataforma e com login na
+          sua conta, enquanto o Serviço existir, incluindo atualizações futuras.
+        </li>
+        <li>
+          Todos os planos são uma licença de <strong>uso do Serviço online</strong>, pessoal e intransferível. Nenhum
+          plano inclui cópia, download, instalação ou código-fonte do software.
         </li>
         <li>Os pagamentos são processados pelo Stripe. Não armazenamos dados de cartão.</li>
         <li>Os preços podem mudar; mudanças em assinaturas ativas são avisadas com antecedência por e-mail.</li>
@@ -62,7 +66,8 @@ export default function TermsPage() {
 
       <h2>6. Propriedade intelectual</h2>
       <p>
-        O MusicOS, sua marca, código e conteúdo pertencem aos seus criadores. O conteúdo que você gera (por exemplo,
+        O MusicOS é software proprietário: a marca, o código-fonte, o design e o conteúdo pertencem aos seus criadores,
+        com todos os direitos reservados. O conteúdo que você gera (por exemplo,
         pontuações de exercícios) é seu.
       </p>
 

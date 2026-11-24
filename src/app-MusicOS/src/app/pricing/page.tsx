@@ -37,7 +37,7 @@ const FAQ = [
   },
   {
     q: 'Como funciona o Vitalício?',
-    a: 'Um único pagamento. Você fica com todos os recursos Pro para sempre, incluindo tudo o que lançarmos no futuro. Sem mensalidade.',
+    a: 'Um único pagamento. Você fica com todos os recursos Pro para sempre, incluindo tudo o que lançarmos no futuro, acessando pela plataforma com a sua conta. Sem mensalidade.',
   },
   {
     q: 'Quais formas de pagamento?',

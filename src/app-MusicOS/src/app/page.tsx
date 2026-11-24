@@ -19,6 +19,7 @@ import { ScaleHeroCard } from '@/components/estudio/ScaleHeroCard';
 import { IntervalTable } from '@/components/estudio/IntervalTable';
 import { ScaleNotesPanel } from '@/components/estudio/ScaleNotesPanel';
 import { PianoKeyboard } from '@/components/estudio/PianoKeyboard';
+import { PianoChords } from '@/components/estudio/PianoChords';
 import { FretboardSection } from '@/components/estudio/FretboardSection';
 import { ChordFieldViewer } from '@/components/estudio/ChordFieldViewer';
 import { CircleOfFifths } from '@/components/estudio/CircleOfFifths';
@@ -40,10 +41,10 @@ const NAV = [
   ['escala', 'Escala'],
   ['intervalos', 'Intervalos'],
   ['transpositor', 'Notas e Campo'],
-  ['teclado', 'Teclado'],
   ['braco', 'Braço'],
   ['acordes', 'Acordes'],
   ['tetrades', 'Tétrades'],
+  ['teclado', 'Teclado'],
   ['ciclo', 'Ciclo de Quintas'],
   ['pratica', 'Prática'],
   ['exercicios', 'Treino auditivo'],
@@ -212,9 +213,6 @@ export default function EstudioPage() {
           <ScaleNotesPanel scale={scale} field={field} tetrads={useTetrads} onTetradsChange={toggleTetrads} />
         </Section>
 
-        <Section id="teclado" icon="🎹" title="Teclado">
-          <PianoKeyboard scale={scale} />
-        </Section>
 
         <Section id="braco" icon="🎸" title={`Braço do Instrumento — ${INSTRUMENT_LABELS[instrument]}`}>
           <FretboardSection scale={scale} instrument={instrument} tuning={tuning} onTuningChange={setTuning} />
@@ -233,6 +231,17 @@ export default function EstudioPage() {
           <ProGate feature="tetrads">
             <ExtendedChordsSection scale={scale} instrument={instrument} tuning={tuning} />
           </ProGate>
+        </Section>
+
+        <Section id="teclado" icon="🎹" title="Teclado e acordes no piano">
+          <div className="card p-6 space-y-6">
+            <PianoKeyboard scale={scale} />
+            <div className="border-t border-ink-600 pt-5">
+              <h3 className="text-lg font-bold text-white mb-1">Acordes no teclado — {scale.root} {scale.def.label}</h3>
+              <p className="text-sm text-slate-400 mb-4">Os mesmos acordes do campo harmônico, com a posição das mãos no piano.</p>
+              <PianoChords scale={scale} triadField={triadField} />
+            </div>
+          </div>
         </Section>
 
         <Section id="ciclo" icon="⭕" title="Ciclo de Quintas">
