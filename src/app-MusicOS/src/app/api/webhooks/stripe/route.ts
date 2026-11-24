@@ -17,7 +17,7 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import type Stripe from 'stripe';
-import { getStripe, planForPriceId } from '@/lib/stripe/server';
+import { getStripe, planForLookupKey, planForPriceId } from '@/lib/stripe/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { Profile, SubscriptionStatus } from '@/lib/entitlements';
 import type { PaidPlanId } from '@/lib/plans';
@@ -66,8 +66,12 @@ async function applySubscription(admin: Admin, userId: string, sub: Stripe.Subsc
   // Quem já é vitalício nunca é rebaixado por eventos de assinatura antiga
   if (profile?.subscription_tier === 'lifetime') return;
 
-  const priceId = sub.items.data[0]?.price?.id;
-  const plan = (sub.metadata?.plan as PaidPlanId | undefined) ?? planForPriceId(priceId) ?? 'pro_monthly';
+  const price = sub.items.data[0]?.price;
+  const plan =
+    (sub.metadata?.plan as PaidPlanId | undefined) ??
+    planForPriceId(price?.id) ??
+    planForLookupKey(price?.lookup_key) ??
+    (price?.recurring?.interval === 'year' ? 'pro_yearly' : 'pro_monthly');
   const status = normalizeStatus(sub.status);
   const ended = status === 'canceled' || status === 'unpaid';
 

@@ -10,7 +10,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import type Stripe from 'stripe';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { appUrl, getStripe, priceIdFor } from '@/lib/stripe/server';
+import { appUrl, getStripe, resolvePriceId } from '@/lib/stripe/server';
 import { isPaidPlan, PLANS } from '@/lib/plans';
 import { entitlementFromProfile, type Profile } from '@/lib/entitlements';
 
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     const params: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       mode: planInfo.recurring ? 'subscription' : 'payment',
-      line_items: [{ price: priceIdFor(plan), quantity: 1 }],
+      line_items: [{ price: await resolvePriceId(plan), quantity: 1 }],
       success_url: `${base}/account?checkout=success&plan=${plan}`,
       cancel_url: `${base}/pricing?checkout=canceled`,
       allow_promotion_codes: true,
