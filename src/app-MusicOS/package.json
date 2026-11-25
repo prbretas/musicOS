@@ -2,11 +2,13 @@
   "name": "music-os",
   "version": "0.1.0",
   "private": true,
+  "license": "UNLICENSED",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "stripe:setup": "node --env-file=.env.local scripts/stripe-setup.mjs",
     "test": "vitest",
     "test:watch": "vitest watch",
     "test:coverage": "vitest run --coverage",

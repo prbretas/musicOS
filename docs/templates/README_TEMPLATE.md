@@ -16,4 +16,4 @@ Leia o [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Licença
 
-MIT
+Software proprietário. Todos os direitos reservados. Uso somente pelo serviço MusicOS, conforme os Termos de Uso.

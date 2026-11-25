@@ -25,7 +25,14 @@ export function midiToFreq(midi: number): number {
 export function playMidi(midi: number, duration = 0.8, when = 0, volume = 0.25): void {
   const ac = audio();
   if (!ac) return;
-  const t = ac.currentTime + when;
+  scheduleNote(midi, duration, ac.currentTime + when, volume);
+}
+
+/** Agenda uma nota num instante absoluto do relogio do AudioContext (ver audioNow). */
+export function scheduleNote(midi: number, duration: number, time: number, volume = 0.25): void {
+  const ac = audio();
+  if (!ac) return;
+  const t = time;
 
   const osc = ac.createOscillator();
   const osc2 = ac.createOscillator();
@@ -64,14 +71,20 @@ export function playSequenceMidi(midis: number[], step = 0.28): void {
 }
 
 /** Clique curto do metronomo, agendado no relogio do AudioContext. */
-export function scheduleClick(time: number, accent: boolean): void {
+export type ClickLevel = 'accent' | 'beat' | 'sub';
+
+export function scheduleClick(time: number, level: ClickLevel | boolean, volume = 1): void {
   const ac = audio();
   if (!ac) return;
+  const kind: ClickLevel = level === true ? 'accent' : level === false ? 'beat' : level;
+  const freq = kind === 'accent' ? 1320 : kind === 'beat' ? 880 : 660;
+  const peak = (kind === 'sub' ? 0.45 : 1) * Math.max(0, Math.min(1, volume));
+  if (peak <= 0) return;
   const osc = ac.createOscillator();
   const gain = ac.createGain();
   osc.type = 'sine';
-  osc.frequency.setValueAtTime(accent ? 1320 : 880, time);
-  gain.gain.setValueAtTime(1, time);
+  osc.frequency.setValueAtTime(freq, time);
+  gain.gain.setValueAtTime(peak, time);
   gain.gain.exponentialRampToValueAtTime(0.001, time + 0.03);
   osc.connect(gain).connect(ac.destination);
   osc.start(time);

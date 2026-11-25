@@ -1,6 +1,5 @@
 /**
- * CAGED - desenhos do braço baseados nos acordes C, A, G, E, D,
- * mais as formas F e B, que completam as 7 posições da escala maior.
+ * CAGED - desenhos do braço baseados nos acordes C, A, G, E, D.
  *
  * Cada forma é o acorde "movido" com pestana. A casa da pestana (k) é
  * a distância em semitons entre a nota da forma e a tônica da tonalidade.
@@ -14,8 +13,8 @@ const CHROMATIC: NoteName[] = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 
 /** Ordem tradicional do CAGED */
 export const CAGED_ORDER = ['C', 'A', 'G', 'E', 'D'] as const;
 
-/** As 7 formas na ordem em que aparecem subindo o braço (C, B, A, G, F, E, D) */
-export const SHAPE_ORDER = ['C', 'B', 'A', 'G', 'F', 'E', 'D'] as const;
+/** As 5 formas na ordem em que aparecem subindo o braço (C, A, G, E, D) */
+export const SHAPE_ORDER = ['C', 'A', 'G', 'E', 'D'] as const;
 export type CagedShape = (typeof SHAPE_ORDER)[number];
 
 export type FretWindow = [number, number];

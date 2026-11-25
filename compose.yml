@@ -1,0 +1,31 @@
+# MusicOS em container (Podman ou Docker)
+#
+#   1. cp src/app-MusicOS/.env.local.example src/app-MusicOS/.env.local  (e preencha)
+#   2. podman compose --env-file src/app-MusicOS/.env.local up -d --build
+#         → sobe em http://localhost:3000
+#      podman compose logs -f            # acompanha
+#      podman compose stop / start       # pausa e retoma
+#      podman compose down               # para e remove o container
+#
+# O --env-file é necessário para preencher os `args` do build (variáveis
+# NEXT_PUBLIC_*); o `env_file` abaixo cobre as variáveis de execução.
+#
+# Para o Stripe conseguir chamar o webhook num servidor de testes, exponha
+# a porta 3000 na internet (ou use `stripe listen --forward-to localhost:3000/api/webhooks/stripe`).
+
+services:
+  musicos:
+    build:
+      context: ./src/app-MusicOS
+      args:
+        # Entram no bundle do navegador — lidas do .env.local na hora do build
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+    image: musicos:latest
+    container_name: musicos
+    env_file:
+      - ./src/app-MusicOS/.env.local
+    ports:
+      - "${PORT:-3000}:3000"
+    restart: unless-stopped

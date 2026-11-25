@@ -41,9 +41,9 @@ const R_IN = 140;
 const R_IN_IN = 90;
 
 const COLORS = {
-  major: { fill: '#1a3a5c', stroke: '#2d5a8a', hover: '#244b72', active: '#2563eb', activeStroke: '#4a9eff' },
-  minor: { fill: '#3d2e1a', stroke: '#6b4c2a', hover: '#4d3a22', active: '#c45e00', activeStroke: '#ff9800' },
-  enharmonic: { fill: '#2d1f3d', stroke: '#7b4a9e' },
+  major: { fill: '#1d1a3d', stroke: '#3b3478', hover: '#2a2560', active: '#6d5dfc', activeStroke: '#c9c2ff' },
+  minor: { fill: '#2a2214', stroke: '#5c4620', hover: '#3a2e18', active: '#e0a024', activeStroke: '#ffe3a3' },
+  enharmonic: { fill: '#1c2a33', stroke: '#2f6b80' },
 };
 
 const round = (n: number) => Math.round(n * 100) / 100;
@@ -125,7 +125,7 @@ export function CircleOfFifths({
             dominantBaseline="central"
             fontSize={major ? 13 : 10.5}
             fontWeight={major ? 'bold' : 'normal'}
-            fill={active ? '#ffffff' : major ? '#e0e0e0' : '#b0b0b0'}
+            fill={active ? (major ? '#ffffff' : '#1a1206') : major ? '#e2e8f0' : '#cbd5e1'}
             style={{ pointerEvents: 'none', userSelect: 'none' }}
           >
             {name}
@@ -140,21 +140,21 @@ export function CircleOfFifths({
   const typeLabel = !info ? '' : info.type === 'sharps' ? 'sustenido(s)' : info.type === 'flats' ? 'bemol(is)' : 'nenhuma alteração';
 
   return (
-    <div className="mx-auto max-w-[520px] bg-[#1e1e1e] border border-[#3a3a3a] rounded-xl p-5 text-center text-[#e0e0e0]">
+    <div className="mx-auto max-w-[540px] text-center text-slate-200">
       <svg width="100%" viewBox={`0 0 ${SIZE} ${SIZE}`} style={{ maxWidth: SIZE }} role="img" aria-label="Ciclo de Quintas interativo">
         {ring(true)}
         {ring(false)}
-        <circle cx={C} cy={C} r={R_IN_IN - 5} fill="#252525" stroke="#4a4a4a" strokeWidth={1.5} />
+        <circle cx={C} cy={C} r={R_IN_IN - 5} fill="#0b0d12" stroke="rgba(255,255,255,.1)" strokeWidth={1.5} />
       </svg>
 
-      <div className="mt-3 bg-[#2d2d2d] border border-[#4a4a4a] rounded-lg px-4 py-3 text-[15px]">
+      <div className="mt-4 rounded-xl border border-white/[0.07] bg-white/[0.03] px-4 py-3 text-[15px]">
         {info && keyName ? (
           <>
             <p className="font-bold">
               {keyName.replace(/m$/, '').replace('m/', '/')} {selected!.major ? 'Maior' : 'Menor'}
             </p>
             <p>{info.count === 0 ? 'Sem acidentes' : `${info.count} ${typeLabel}`}</p>
-            <p className="text-sm text-[#b0b0b0]">Notas alteradas: {altered.length ? altered.join(', ') : '—'}</p>
+            <p className="text-sm text-slate-400">Notas alteradas: {altered.length ? altered.join(', ') : '—'}</p>
             {onApply && (
               <button
                 onClick={() =>
@@ -163,18 +163,18 @@ export function CircleOfFifths({
                     selected!.major ? 'maior' : 'menor_natural'
                   )
                 }
-                className="mt-3 px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold"
+                className="mt-3 px-4 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-400 text-white text-sm font-semibold"
               >
                 Usar esta tonalidade na página
               </button>
             )}
           </>
         ) : (
-          <p className="text-[#b0b0b0]">Clique em uma tonalidade para ver sua armadura de clave.</p>
+          <p className="text-slate-400">Clique em uma tonalidade para ver sua armadura de clave.</p>
         )}
       </div>
 
-      <div className="mt-2 bg-[#2d1f3d] border border-[#7b4a9e] rounded-md px-3 py-2 text-sm text-[#ce93d8]">
+      <div className="mt-2 rounded-xl border border-cyan-400/20 bg-cyan-400/[0.06] px-3 py-2 text-sm text-cyan-200">
         <span className="font-semibold">Enarmônicos:</span> F#/Gb · C#/Db · Cb/B
       </div>
     </div>

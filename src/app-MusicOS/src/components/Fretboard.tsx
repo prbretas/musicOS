@@ -13,8 +13,10 @@ import { useState } from 'react';
 import type { NoteName } from '@/types/music';
 
 interface FretboardProps {
-  instrument: 'guitar' | 'ukulele';
+  instrument?: string;
   tuning?: string[];
+  /** Casa onde cada corda começa (banjo: a 5ª corda começa na casa 5). Padrão: 0 */
+  stringStartFret?: number[];
   highlightedNotes?: NoteName[];
   scale?: { root: NoteName; type: string; notes: NoteName[] };
   startFret?: number;
@@ -26,6 +28,10 @@ interface FretboardProps {
   focusNotes?: NoteName[];
   /** Notas de acorde destacadas com anel branco. As outras notas ativas ficam mais fracas. */
   chordNotes?: NoteName[];
+  /** Posições exatas de um desenho de acorde (corda, casa), destacadas com anel branco */
+  grip?: Array<{ s: number; f: number; role?: string }>;
+  /** Mostrar só o desenho do acorde (esconde o restante da escala) */
+  gripOnly?: boolean;
   onNoteClick?: (note: NoteName, fret: number, string: number) => void;
 }
 
@@ -58,8 +64,12 @@ export function Fretboard({
   fretWindows,
   focusNotes,
   chordNotes,
+  grip,
+  gripOnly = false,
+  stringStartFret,
   onNoteClick,
 }: FretboardProps) {
+  const gripAt = (s: number, f: number) => grip?.find((g) => g.s === s && g.f === f);
   const [hovered, setHovered] = useState<string | null>(null);
 
   const strings = tuning ?? (instrument === 'guitar' ? GUITAR_TUNING : UKULELE_TUNING);
@@ -99,7 +109,7 @@ export function Fretboard({
 
   return (
     <div style={{ overflowX: 'auto' }}>
-      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: 'block', minWidth: W }}>
+      <svg data-testid="fretboard" width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: 'block', minWidth: W }}>
         {/* Marcadores de casa */}
         {MARKERS.filter((m) => m >= startFret && m <= endFret).map((m) => {
           const cx = midX(m);
@@ -136,7 +146,7 @@ export function Fretboard({
         {strings.map((_, s) => (
           <line
             key={s}
-            x1={PAD_LEFT}
+            x1={(stringStartFret?.[s] ?? 0) > 0 ? PAD_LEFT + ((stringStartFret?.[s] ?? 0) - firstCell) * FRET_W : PAD_LEFT}
             y1={stringY(rowOf(s))}
             x2={PAD_LEFT + nCells * FRET_W}
             y2={stringY(rowOf(s))}
@@ -173,22 +183,26 @@ export function Fretboard({
         {/* Notas */}
         {strings.map((pitch, s) => {
           const open = pitchToNote(pitch);
+          const start = stringStartFret?.[s] ?? 0;
           return Array.from({ length: nFrets }).map((_, i) => {
             const fret = startFret + i;
-            const note = noteAt(open, fret);
+            // corda curta: as casas antes do início dela não existem
+            if (start > 0 && fret > 0 && fret <= start) return null;
+            const note = noteAt(open, fret === 0 ? 0 : fret - start);
             const key = `${s}-${fret}`;
             const isHov = hovered === key;
 
-            const cx = fret === 0 ? OPEN_X : midX(fret);
+            const cx = fret === 0 ? (start > 0 ? midX(start) : OPEN_X) : midX(fret);
             const cy = stringY(rowOf(s));
 
             const degree = scaleNotes.indexOf(note);
             const inScale = hasScale && degree !== -1;
             const inFocus = !focusNotes || focusNotes.includes(note as NoteName);
-            const active = inScale && inFocus && inWindow(fret);
+            const gripHere = gripAt(s, fret);
+            const active = inScale && inFocus && inWindow(fret) && (!gripOnly || !!gripHere);
             const marked = !hasScale && hasHighlight && highlightedNotes.includes(note as NoteName);
-            const hasChord = !!chordNotes && chordNotes.length > 0;
-            const isChordTone = hasChord && chordNotes!.includes(note as NoteName);
+            const hasChord = (!!chordNotes && chordNotes.length > 0) || (!!grip && grip.length > 0);
+            const isChordTone = grip ? !!gripHere : hasChord && chordNotes!.includes(note as NoteName);
 
             let fill = '#1e293b';
             let stroke = '#334155';

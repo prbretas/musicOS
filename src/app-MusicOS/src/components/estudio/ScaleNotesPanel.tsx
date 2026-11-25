@@ -36,8 +36,8 @@ export function ScaleNotesPanel({
   const scaleMidis = ascendingMidis(rootPc, scale.notes);
   const canToggle = scale.notes.length === 7 && scale.def.parentOffset !== undefined;
 
-  const box = 'bg-slate-800 border-l-4 border-blue-500 rounded-lg p-4 font-mono text-[15px]';
-  const row = 'w-full text-left px-2 py-1 rounded hover:bg-slate-700 transition-colors';
+  const box = 'bg-ink-700 border-l-4 border-brand-500 rounded-lg p-4 font-mono text-[15px]';
+  const row = 'w-full text-left px-2 py-1 rounded hover:bg-ink-600 transition-colors';
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
@@ -46,7 +46,7 @@ export function ScaleNotesPanel({
           <h3 className="text-lg font-bold text-slate-100">🎵 Notas da Escala</h3>
           <button
             onClick={() => playSequenceMidi([...scaleMidis, scaleMidis[0] + 12])}
-            className="text-sm px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white"
+            className="text-sm px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-400 text-white"
           >
             ▶ Tocar escala
           </button>
@@ -64,7 +64,7 @@ export function ScaleNotesPanel({
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-bold text-slate-100">📚 Campo Harmônico</h3>
           {canToggle && (
-            <div className="flex rounded-lg overflow-hidden border border-slate-600 text-sm">
+            <div className="flex rounded-lg overflow-hidden border border-ink-500 text-sm">
               {[
                 [false, 'Tríades'],
                 [true, 'Tétrades'],
@@ -72,7 +72,7 @@ export function ScaleNotesPanel({
                 <button
                   key={String(v)}
                   onClick={() => onTetradsChange(v as boolean)}
-                  className={`px-3 py-1.5 ${tetrads === v ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300'}`}
+                  className={`px-3 py-1.5 ${tetrads === v ? 'bg-brand-500 text-white' : 'bg-ink-600 text-slate-300'}`}
                 >
                   {label as string}
                 </button>
